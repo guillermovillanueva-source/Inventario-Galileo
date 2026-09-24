@@ -88,19 +88,28 @@
         </div>
       </div>
 
-      <nav class="p-4 space-y-1">
-        <div class="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dashboard Views</div>
+      <nav class="p-4 space-y-2">
+        <!-- SELECTOR DE INVENTARIOS -->
+        <div class="bg-[#0f1115] p-2.5 rounded-xl border border-rocker space-y-1.5 mb-3">
+          <label class="block text-[10px] font-bold text-blue-400 uppercase tracking-wider">Origen de Datos</label>
+          <select id="datasetSelector" onchange="switchDataset(this.value)" class="w-full bg-[#171a1f] border border-rocker text-slate-200 px-2 py-1.5 rounded-lg focus:outline-none focus:border-blue-500 text-xs font-semibold">
+            <option value="HQ" selected>🏢 Inventario HQ / Corporativo</option>
+            <option value="TIENDAS">🏪 Inventario Tiendas / Retail</option>
+          </select>
+        </div>
+
+        <div class="px-3 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dashboard Views</div>
         
-        <button onclick="switchView('global')" id="nav-global" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/20 font-medium transition">
+        <button onclick="switchView('global')" id="nav-global" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/20 font-medium transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
           <span>Vista General</span>
         </button>
 
-        <div class="pt-2 px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Alternate Views</div>
+        <div class="pt-2 px-3 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Alternate Views</div>
 
         <button onclick="switchView('area')" id="nav-area" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
           <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-          <span>Óptica por Área</span>
+          <span id="navAreaText">Óptica por Área</span>
         </button>
 
         <button onclick="switchView('modelo')" id="nav-modelo" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
@@ -113,16 +122,15 @@
           <span>Óptica Financiera / Vida</span>
         </button>
 
-        <!-- SECCIÓN DE ADMINISTRACIÓN (SOLO VISIBLE PARA ADMINS) -->
         <div id="adminNavSection" class="hidden">
-          <div class="pt-4 px-3 py-1.5 text-[10px] font-bold text-amber-500 uppercase tracking-wider">Administración</div>
+          <div class="pt-3 px-3 py-1 text-[10px] font-bold text-amber-500 uppercase tracking-wider">Administración</div>
           <button onclick="switchView('logs')" id="nav-logs" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
             <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
             <span>Log de Auditoría</span>
           </button>
         </div>
 
-        <div class="pt-4 px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Acciones</div>
+        <div class="pt-3 px-3 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Acciones</div>
 
         <button onclick="exportCSV()" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
           <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
@@ -190,7 +198,7 @@
           <input type="text" id="filterMail" placeholder="✉️ Buscar por Correo..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
 
           <select id="filterArea" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs">
-            <option value="">Todas las Áreas / Direcciones</option>
+            <option value="">Todas las Áreas / Tiendas</option>
           </select>
 
           <select id="filterMarca" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs">
@@ -209,7 +217,7 @@
       <!-- Tabla Principal de Activos -->
       <div id="tableSection" class="bg-panel rounded-xl border border-rocker shadow-xl overflow-hidden">
         <div class="p-4 border-b border-rocker flex justify-between items-center">
-          <h2 class="text-sm font-bold text-white">Listado Completo de Activos</h2>
+          <h2 id="tableTitleDisplay" class="text-sm font-bold text-white">Listado Completo - HQ Corporativo</h2>
           <button id="mainBtnNuevo" onclick="openModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-3 py-1.5 rounded-lg text-xs transition hidden">
             + Nuevo Equipo
           </button>
@@ -221,7 +229,7 @@
               <tr>
                 <th class="p-3">Responsable</th>
                 <th class="p-3">Correo</th>
-                <th class="p-3">Área</th>
+                <th class="p-3" id="thAreaHead">Área / Dirección</th>
                 <th class="p-3">Modelo</th>
                 <th class="p-3">Serie</th>
                 <th class="p-3">RAM / CPU</th>
@@ -251,7 +259,7 @@
     </main>
   </div>
 
-  <!-- Modal para Altas / Edición COMPLETA -->
+  <!-- Modal para Altas / Edición -->
   <div id="assetModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
     <div class="bg-panel border border-rocker rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col">
       <div class="p-4 border-b border-rocker flex justify-between items-center bg-[#0f1115]">
@@ -274,8 +282,8 @@
           </div>
 
           <div>
-            <label class="block text-slate-400 mb-1">Dirección / Área</label>
-            <input type="text" id="formDireccion" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Tech, Marketing, RH...">
+            <label class="block text-slate-400 mb-1" id="lblFormDireccion">Dirección / Área</label>
+            <input type="text" id="formDireccion" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Tech, Marketing, RH, Tienda Roma...">
           </div>
 
           <div>
@@ -309,7 +317,7 @@
           <div>
             <label class="block text-slate-400 mb-1">Tier Actual</label>
             <select id="formTier" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500">
-              <option value="T1">T1 (Campo / Operación)</option>
+              <option value="T1">T1 (Campo / Tienda / Operación)</option>
               <option value="T2">T2 (Analistas / Coordinadores)</option>
               <option value="T3">T3 (QA / Product Manager)</option>
               <option value="T4">T4 (Dev / Design)</option>
@@ -333,18 +341,21 @@
   </div>
 
   <script>
-    const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6O7VuFl6hhj6TzvCYlHF5mVq6qQz49oTsFurFP7yINJzTjNddurEHG_GQCVsy4cqEO8ntD_m1WYi-/pub?gid=1154664784&single=true&output=csv';
+    // URLS CSV ORIGEN
+    const SHEET_HQ_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6O7VuFl6hhj6TzvCYlHF5mVq6qQz49oTsFurFP7yINJzTjNddurEHG_GQCVsy4cqEO8ntD_m1WYi-/pub?gid=1154664784&single=true&output=csv';
+    const SHEET_TIENDAS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVj5iUE5wOYEvbzeIKp1nIJwQ9gYbAPqK9KGid2hmsVxjHeL4OclmpwJDUoaKYJSCsN6K3IgCHHuQl/pub?gid=1184661297&single=true&output=csv';
 
     const ADMIN_EMAILS = ['guillermo.villanueva@benandfrank.com', 'edgar.rodriguez@benandfrank.com'];
     const ADMIN_BU = 'Tech';
 
+    let currentDataset = 'HQ'; // 'HQ' o 'TIENDAS'
     let currentUser = null;
     let isAdmin = false;
     let activeView = 'global';
 
     let globalData = [];
     let filteredData = [];
-    let auditLogs = []; // Almacenamiento local de auditoría
+    let auditLogs = [];
 
     let currentPage = 1;
     const pageSize = 10;
@@ -352,12 +363,9 @@
     let chartObj1 = null;
     let chartObj2 = null;
 
-    // Cargar logs previos desde localStorage
     window.addEventListener('DOMContentLoaded', () => {
       const savedLogs = localStorage.getItem('galileo_audit_logs');
-      if (savedLogs) {
-        auditLogs = JSON.parse(savedLogs);
-      }
+      if (savedLogs) auditLogs = JSON.parse(savedLogs);
     });
 
     function logAction(tipo, detalle) {
@@ -365,12 +373,26 @@
         timestamp: new Date().toLocaleString('es-MX'),
         user: currentUser ? currentUser.mail : 'Anonimo',
         bu: currentUser ? currentUser.bu : 'N/D',
+        dataset: currentDataset,
         role: isAdmin ? 'Admin' : 'Lector',
-        type: tipo, // 'VISITA', 'EDICION', 'EXPORT'
+        type: tipo,
         detail: detalle
       };
       auditLogs.unshift(logEntry);
-      localStorage.setItem('galileo_audit_logs', JSON.stringify(auditLogs.slice(0, 100))); // Mantener últimos 100
+      localStorage.setItem('galileo_audit_logs', JSON.stringify(auditLogs.slice(0, 100)));
+    }
+
+    function switchDataset(datasetKey) {
+      currentDataset = datasetKey;
+      
+      const isHQ = datasetKey === 'HQ';
+      document.getElementById('tableTitleDisplay').innerText = isHQ ? 'Listado Completo - HQ Corporativo' : 'Listado Completo - Tiendas / Retail';
+      document.getElementById('thAreaHead').innerText = isHQ ? 'Área / Dirección' : 'Sucursal / Tienda';
+      document.getElementById('navAreaText').innerText = isHQ ? 'Óptica por Área' : 'Óptica por Tienda';
+      document.getElementById('lblFormDireccion').innerText = isHQ ? 'Dirección / Área' : 'Sucursal / Tienda';
+
+      logAction('CAMBIO_DATASET', `Cambio de contexto a inventario: ${datasetKey}`);
+      fetchData();
     }
 
     function handleLogin(e) {
@@ -404,32 +426,25 @@
         document.getElementById('adminNavSection').classList.add('hidden');
       }
 
-      // Registrar inicio de sesión / visita
       logAction('VISITA', `Acceso al portal ITAM como perfil ${isAdmin ? 'Administrador' : 'Lector'}`);
-
       fetchData();
     }
 
     function fetchData() {
-      Papa.parse(SHEET_CSV_URL, {
+      const targetUrl = currentDataset === 'HQ' ? SHEET_HQ_URL : SHEET_TIENDAS_URL;
+
+      Papa.parse(targetUrl, {
         download: true,
         header: false,
         skipEmptyLines: true,
         complete: function(results) {
           const rawRows = results.data;
-          let headerIndex = rawRows.findIndex(row => row.some(cell => String(cell).includes('Numero de Serie') || String(cell).includes('Responsable')));
-          if (headerIndex === -1) headerIndex = 9;
-
-          const headers = rawRows[headerIndex].map(h => String(h).trim());
-          const dataRows = rawRows.slice(headerIndex + 1);
-
-          globalData = dataRows.map((row, idx) => {
-            let obj = { _rowIndex: idx };
-            headers.forEach((h, i) => {
-              obj[h] = row[i] ? String(row[i]).trim() : '';
-            });
-            return obj;
-          }).filter(item => item['Mail'] || item['Responsable del activo'] || item['Numero de Serie']);
+          
+          if (currentDataset === 'HQ') {
+            parseHQData(rawRows);
+          } else {
+            parseTiendasData(rawRows);
+          }
 
           populateFilterDropdowns(globalData);
           applyFilters();
@@ -437,12 +452,67 @@
       });
     }
 
+    function parseHQData(rawRows) {
+      let headerIndex = rawRows.findIndex(row => row.some(cell => String(cell).includes('Numero de Serie') || String(cell).includes('Responsable')));
+      if (headerIndex === -1) headerIndex = 9;
+
+      const headers = rawRows[headerIndex].map(h => String(h).trim());
+      const dataRows = rawRows.slice(headerIndex + 1);
+
+      globalData = dataRows.map((row, idx) => {
+        let obj = { _rowIndex: idx };
+        headers.forEach((h, i) => {
+          obj[h] = row[i] ? String(row[i]).trim() : '';
+        });
+        return obj;
+      }).filter(item => item['Mail'] || item['Responsable del activo'] || item['Numero de Serie']);
+    }
+
+    // Normalizador de datos para Tiendas
+    function parseTiendasData(rawRows) {
+      // Buscar la fila que contenga encabezados de tiendas
+      let headerIndex = rawRows.findIndex(row => row.some(cell => 
+        String(cell).toLowerCase().includes('serie') || 
+        String(cell).toLowerCase().includes('tienda') || 
+        String(cell).toLowerCase().includes('responsable') ||
+        String(cell).toLowerCase().includes('modelo')
+      ));
+
+      if (headerIndex === -1) headerIndex = 0;
+
+      const headers = rawRows[headerIndex].map(h => String(h).trim());
+      const dataRows = rawRows.slice(headerIndex + 1);
+
+      globalData = dataRows.map((row, idx) => {
+        let rawObj = {};
+        headers.forEach((h, i) => {
+          rawObj[h] = row[i] ? String(row[i]).trim() : '';
+        });
+
+        // Mapeo unificado de Tiendas al esquema estándar
+        return {
+          _rowIndex: idx,
+          'Responsable del activo': rawObj['Responsable'] || rawObj['Usuario'] || rawObj['Encargado'] || 'Tienda ' + (rawObj['Tienda'] || rawObj['Sucursal'] || ''),
+          'Mail': rawObj['Mail'] || rawObj['Correo'] || (rawObj['Tienda'] ? rawObj['Tienda'].toLowerCase().replace(/\s+/g, '') + '@benandfrank.com' : 'tienda@benandfrank.com'),
+          'Direccion': rawObj['Tienda'] || rawObj['Sucursal'] || rawObj['Ubicacion'] || 'Retail / Tiendas',
+          'Marca': rawObj['Marca'] || (String(rawObj['Modelo'] || '').toLowerCase().includes('mac') ? 'Apple' : 'Lenovo'),
+          'Model': rawObj['Modelo'] || rawObj['Equipo'] || rawObj['Dispositivo'] || 'Laptop Tienda',
+          'Numero de Serie': rawObj['Numero de Serie'] || rawObj['Serie'] || rawObj['Serial'] || 'S/N',
+          'RAM': rawObj['RAM'] || rawObj['Memoria'] || '8 GB',
+          'CPU': rawObj['CPU'] || rawObj['Procesador'] || 'Estándar',
+          'Tier Actual': rawObj['Tier'] || 'T1',
+          'Años de Vida Remanente': rawObj['Años de Vida Remanente'] || rawObj['Vida Remanente'] || '2',
+          'Actual vs Esperado': rawObj['Estatus'] || rawObj['Estado'] || 'Correcto'
+        };
+      }).filter(item => item['Numero de Serie'] && item['Numero de Serie'] !== 'S/N' || item['Direccion']);
+    }
+
     function populateFilterDropdowns(data) {
       const areas = [...new Set(data.map(d => (d['Direccion'] || '').trim()).filter(Boolean))].sort();
       const marcas = [...new Set(data.map(d => (d['Marca'] || '').trim()).filter(Boolean))].sort();
 
       const selArea = document.getElementById('filterArea');
-      selArea.innerHTML = '<option value="">Todas las Áreas / Direcciones</option>';
+      selArea.innerHTML = currentDataset === 'HQ' ? '<option value="">Todas las Áreas / Direcciones</option>' : '<option value="">Todas las Tiendas / Sucursales</option>';
       areas.forEach(a => selArea.innerHTML += `<option value="${a}">${a}</option>`);
 
       const selMarca = document.getElementById('filterMarca');
@@ -451,14 +521,14 @@
     }
 
     function switchView(viewName) {
-      if (viewName === 'logs' && !isAdmin) return; // Guardrail de seguridad
+      if (viewName === 'logs' && !isAdmin) return;
 
       activeView = viewName;
       ['global', 'area', 'modelo', 'costo', 'logs'].forEach(v => {
         const btn = document.getElementById(`nav-${v}`);
         if (btn) {
           if (v === viewName) {
-            btn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/20 font-medium transition";
+            btn.className = "w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/20 font-medium transition";
           } else {
             btn.className = "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition";
           }
@@ -527,6 +597,7 @@
           <td class="p-3 font-mono text-slate-400">${log.timestamp}</td>
           <td class="p-3 font-semibold text-white">${log.user}</td>
           <td class="p-3 text-slate-400">${log.bu}</td>
+          <td class="p-3 font-bold text-blue-400">${log.dataset || 'HQ'}</td>
           <td class="p-3 text-center">
             <span class="px-2 py-0.5 rounded text-[10px] font-bold ${log.role === 'Admin' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-slate-800 text-slate-400'}">
               ${log.role}
@@ -538,7 +609,7 @@
       `).join('');
 
       if (auditLogs.length === 0) {
-        rowsHtml = '<tr><td colspan="6" class="text-center p-8 text-slate-600">No hay registros de auditoría aún</td></tr>';
+        rowsHtml = '<tr><td colspan="7" class="text-center p-8 text-slate-600">No hay registros de auditoría aún</td></tr>';
       }
 
       container.innerHTML = `
@@ -548,7 +619,7 @@
               <h2 class="text-base font-bold text-amber-400 flex items-center gap-2">
                 📜 Log de Auditoría y Accesos (Solo Admins)
               </h2>
-              <p class="text-xs text-slate-400">Historial inmutable de accesos y ediciones realizadas en esta sesión</p>
+              <p class="text-xs text-slate-400">Historial inmutable de accesos, cambios de dataset y ediciones</p>
             </div>
             <span class="text-xs font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-1 rounded-lg">
               ${auditLogs.length} Registros
@@ -562,6 +633,7 @@
                   <th class="p-3">Fecha / Hora</th>
                   <th class="p-3">Usuario</th>
                   <th class="p-3">BU</th>
+                  <th class="p-3">Origen</th>
                   <th class="p-3 text-center">Perfil</th>
                   <th class="p-3">Evento</th>
                   <th class="p-3">Detalle de la Acción</th>
@@ -601,14 +673,15 @@
         renderGlobalCharts(data);
       } 
       else if (activeView === 'area') {
+        const areaLabel = currentDataset === 'HQ' ? 'Área / Dirección' : 'Tienda / Sucursal';
         container.innerHTML = `
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-              <h2 class="text-sm font-bold text-purple-400 mb-4">📍 Volumetría de Laptops por Área / Dirección</h2>
+              <h2 class="text-sm font-bold text-purple-400 mb-4">📍 Volumetría por ${areaLabel}</h2>
               <div class="h-64"><canvas id="c1"></canvas></div>
             </div>
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-              <h2 class="text-sm font-bold text-indigo-400 mb-4">📊 Diagnóstico de Especificación por Área</h2>
+              <h2 class="text-sm font-bold text-indigo-400 mb-4">📊 Diagnóstico por ${areaLabel}</h2>
               <div class="h-64"><canvas id="c2"></canvas></div>
             </div>
           </div>
@@ -619,7 +692,7 @@
         container.innerHTML = `
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-              <h2 class="text-sm font-bold text-cyan-400 mb-4">💻 Top 7 Modelos Más Utilizados</h2>
+              <h2 class="text-sm font-bold text-cyan-400 mb-4">💻 Top Modelos Más Utilizados</h2>
               <div class="h-64"><canvas id="c1"></canvas></div>
             </div>
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
@@ -692,8 +765,8 @@
       chartObj1 = new Chart(document.getElementById('c1'), {
         type: 'bar',
         data: {
-          labels: Object.keys(areaCount),
-          datasets: [{ label: 'Equipos', data: Object.values(areaCount), backgroundColor: '#a855f7', borderRadius: 6 }]
+          labels: Object.keys(areaCount).slice(0, 10),
+          datasets: [{ label: 'Equipos', data: Object.values(areaCount).slice(0, 10), backgroundColor: '#a855f7', borderRadius: 6 }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: '#242830' } } } }
       });
@@ -830,7 +903,7 @@
       if (!isAdmin) return;
       document.getElementById('assetModal').classList.remove('hidden');
       if (item) {
-        document.getElementById('modalTitle').innerText = 'Editar Todos los Datos del Equipo';
+        document.getElementById('modalTitle').innerText = 'Editar Datos del Equipo (' + currentDataset + ')';
         document.getElementById('editRowIndex').value = item._rowIndex;
         document.getElementById('formResponsable').value = item['Responsable del activo'] || '';
         document.getElementById('formMail').value = item['Mail'] || '';
@@ -843,7 +916,7 @@
         document.getElementById('formTier').value = item['Tier Actual'] || 'T1';
         document.getElementById('formVida').value = item['Años de Vida Remanente'] || '0';
       } else {
-        document.getElementById('modalTitle').innerText = 'Registrar Equipo Nuevo';
+        document.getElementById('modalTitle').innerText = 'Registrar Equipo Nuevo en ' + currentDataset;
         document.getElementById('assetForm').reset();
         document.getElementById('editRowIndex').value = '';
       }
@@ -881,10 +954,10 @@
           item['Tier Actual'] = document.getElementById('formTier').value;
           item['Años de Vida Remanente'] = document.getElementById('formVida').value;
 
-          logAction('EDICION', `Modificación del equipo S/N: ${serie} asignado a ${responsable}`);
+          logAction('EDICION', `Modificación en ${currentDataset} S/N: ${serie} (${responsable})`);
         }
       } else {
-        logAction('EDICION', `Alta de nuevo equipo S/N: ${serie} asignado a ${responsable}`);
+        logAction('EDICION', `Alta en ${currentDataset} S/N: ${serie} (${responsable})`);
       }
 
       applyFilters();
@@ -898,14 +971,14 @@
         return;
       }
 
-      logAction('EXPORT', `Exportación de ${filteredData.length} registros en formato CSV`);
+      logAction('EXPORT', `Exportación CSV del inventario ${currentDataset} (${filteredData.length} registros)`);
 
       const csvContent = Papa.unparse(filteredData);
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', `Inventario_Galileo_${new Date().toISOString().slice(0,10)}.csv`);
+      link.setAttribute('download', `Inventario_Galileo_${currentDataset}_${new Date().toISOString().slice(0,10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
