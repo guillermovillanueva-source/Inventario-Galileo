@@ -113,6 +113,15 @@
           <span>Óptica Financiera / Vida</span>
         </button>
 
+        <!-- SECCIÓN DE ADMINISTRACIÓN (SOLO VISIBLE PARA ADMINS) -->
+        <div id="adminNavSection" class="hidden">
+          <div class="pt-4 px-3 py-1.5 text-[10px] font-bold text-amber-500 uppercase tracking-wider">Administración</div>
+          <button onclick="switchView('logs')" id="nav-logs" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
+            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span>Log de Auditoría</span>
+          </button>
+        </div>
+
         <div class="pt-4 px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Acciones</div>
 
         <button onclick="exportCSV()" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
@@ -175,7 +184,7 @@
       </div>
 
       <!-- Filtros Multicriterio -->
-      <div class="bg-panel p-4 rounded-xl border border-rocker shadow-xl space-y-3">
+      <div id="filterSection" class="bg-panel p-4 rounded-xl border border-rocker shadow-xl space-y-3">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <input type="text" id="filterNombre" placeholder="👤 Buscar por Nombre..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
           <input type="text" id="filterMail" placeholder="✉️ Buscar por Correo..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
@@ -197,8 +206,8 @@
         </div>
       </div>
 
-      <!-- Tabla de Activos Estilo Rocker -->
-      <div class="bg-panel rounded-xl border border-rocker shadow-xl overflow-hidden">
+      <!-- Tabla Principal de Activos -->
+      <div id="tableSection" class="bg-panel rounded-xl border border-rocker shadow-xl overflow-hidden">
         <div class="p-4 border-b border-rocker flex justify-between items-center">
           <h2 class="text-sm font-bold text-white">Listado Completo de Activos</h2>
           <button id="mainBtnNuevo" onclick="openModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-3 py-1.5 rounded-lg text-xs transition hidden">
@@ -242,7 +251,7 @@
     </main>
   </div>
 
-  <!-- Modal para Altas / Edición COMPLETA de todos los campos -->
+  <!-- Modal para Altas / Edición COMPLETA -->
   <div id="assetModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
     <div class="bg-panel border border-rocker rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col">
       <div class="p-4 border-b border-rocker flex justify-between items-center bg-[#0f1115]">
@@ -335,11 +344,34 @@
 
     let globalData = [];
     let filteredData = [];
+    let auditLogs = []; // Almacenamiento local de auditoría
+
     let currentPage = 1;
     const pageSize = 10;
 
     let chartObj1 = null;
     let chartObj2 = null;
+
+    // Cargar logs previos desde localStorage
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedLogs = localStorage.getItem('galileo_audit_logs');
+      if (savedLogs) {
+        auditLogs = JSON.parse(savedLogs);
+      }
+    });
+
+    function logAction(tipo, detalle) {
+      const logEntry = {
+        timestamp: new Date().toLocaleString('es-MX'),
+        user: currentUser ? currentUser.mail : 'Anonimo',
+        bu: currentUser ? currentUser.bu : 'N/D',
+        role: isAdmin ? 'Admin' : 'Lector',
+        type: tipo, // 'VISITA', 'EDICION', 'EXPORT'
+        detail: detalle
+      };
+      auditLogs.unshift(logEntry);
+      localStorage.setItem('galileo_audit_logs', JSON.stringify(auditLogs.slice(0, 100))); // Mantener últimos 100
+    }
 
     function handleLogin(e) {
       e.preventDefault();
@@ -363,12 +395,17 @@
         document.getElementById('mainBtnNuevo').classList.remove('hidden');
         document.getElementById('sidebarBtnNuevo').classList.remove('hidden');
         document.getElementById('sidebarBtnNuevo').classList.add('flex');
+        document.getElementById('adminNavSection').classList.remove('hidden');
       } else {
         badge.innerText = 'Lector';
         badge.className = 'text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.2 rounded uppercase font-mono';
         document.getElementById('mainBtnNuevo').classList.add('hidden');
         document.getElementById('sidebarBtnNuevo').classList.add('hidden');
+        document.getElementById('adminNavSection').classList.add('hidden');
       }
+
+      // Registrar inicio de sesión / visita
+      logAction('VISITA', `Acceso al portal ITAM como perfil ${isAdmin ? 'Administrador' : 'Lector'}`);
 
       fetchData();
     }
@@ -414,17 +451,29 @@
     }
 
     function switchView(viewName) {
+      if (viewName === 'logs' && !isAdmin) return; // Guardrail de seguridad
+
       activeView = viewName;
-      ['global', 'area', 'modelo', 'costo'].forEach(v => {
+      ['global', 'area', 'modelo', 'costo', 'logs'].forEach(v => {
         const btn = document.getElementById(`nav-${v}`);
-        if (v === viewName) {
-          btn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/20 font-medium transition";
-        } else {
-          btn.className = "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition";
+        if (btn) {
+          if (v === viewName) {
+            btn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/20 font-medium transition";
+          } else {
+            btn.className = "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition";
+          }
         }
       });
 
-      renderDashboard(filteredData);
+      if (viewName === 'logs') {
+        document.getElementById('filterSection').classList.add('hidden');
+        document.getElementById('tableSection').classList.add('hidden');
+        renderAuditLogsView();
+      } else {
+        document.getElementById('filterSection').classList.remove('hidden');
+        document.getElementById('tableSection').classList.remove('hidden');
+        renderDashboard(filteredData);
+      }
     }
 
     function applyFilters() {
@@ -457,8 +506,10 @@
       });
 
       currentPage = 1;
-      renderDashboard(filteredData);
-      renderTable();
+      if (activeView !== 'logs') {
+        renderDashboard(filteredData);
+        renderTable();
+      }
     }
 
     document.getElementById('searchInput').addEventListener('input', applyFilters);
@@ -467,6 +518,63 @@
     document.getElementById('filterArea').addEventListener('change', applyFilters);
     document.getElementById('filterMarca').addEventListener('change', applyFilters);
     document.getElementById('filterDiagnostico').addEventListener('change', applyFilters);
+
+    function renderAuditLogsView() {
+      const container = document.getElementById('viewContainer');
+      
+      let rowsHtml = auditLogs.map(log => `
+        <tr class="bg-panel-hover transition-colors">
+          <td class="p-3 font-mono text-slate-400">${log.timestamp}</td>
+          <td class="p-3 font-semibold text-white">${log.user}</td>
+          <td class="p-3 text-slate-400">${log.bu}</td>
+          <td class="p-3 text-center">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${log.role === 'Admin' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-slate-800 text-slate-400'}">
+              ${log.role}
+            </span>
+          </td>
+          <td class="p-3 font-bold ${log.type === 'VISITA' ? 'text-purple-400' : log.type === 'EDICION' ? 'text-amber-400' : 'text-emerald-400'}">${log.type}</td>
+          <td class="p-3 text-slate-300">${log.detail}</td>
+        </tr>
+      `).join('');
+
+      if (auditLogs.length === 0) {
+        rowsHtml = '<tr><td colspan="6" class="text-center p-8 text-slate-600">No hay registros de auditoría aún</td></tr>';
+      }
+
+      container.innerHTML = `
+        <div class="bg-panel rounded-xl border border-rocker shadow-xl overflow-hidden p-5 space-y-4">
+          <div class="flex justify-between items-center border-b border-rocker pb-4">
+            <div>
+              <h2 class="text-base font-bold text-amber-400 flex items-center gap-2">
+                📜 Log de Auditoría y Accesos (Solo Admins)
+              </h2>
+              <p class="text-xs text-slate-400">Historial inmutable de accesos y ediciones realizadas en esta sesión</p>
+            </div>
+            <span class="text-xs font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-1 rounded-lg">
+              ${auditLogs.length} Registros
+            </span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-[#0f1115] text-slate-400 uppercase tracking-wider border-b border-rocker text-[10px]">
+                <tr>
+                  <th class="p-3">Fecha / Hora</th>
+                  <th class="p-3">Usuario</th>
+                  <th class="p-3">BU</th>
+                  <th class="p-3 text-center">Perfil</th>
+                  <th class="p-3">Evento</th>
+                  <th class="p-3">Detalle de la Acción</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-rocker">
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
 
     function renderDashboard(data) {
       const container = document.getElementById('viewContainer');
@@ -755,27 +863,33 @@
       e.preventDefault();
       if (!isAdmin) return;
       
-      // Actualización Local en Cliente
       const rIdx = document.getElementById('editRowIndex').value;
+      const responsable = document.getElementById('formResponsable').value;
+      const serie = document.getElementById('formSerie').value;
+
       if (rIdx !== '') {
         const item = globalData.find(d => d._rowIndex === parseInt(rIdx));
         if (item) {
-          item['Responsable del activo'] = document.getElementById('formResponsable').value;
+          item['Responsable del activo'] = responsable;
           item['Mail'] = document.getElementById('formMail').value;
           item['Direccion'] = document.getElementById('formDireccion').value;
           item['Marca'] = document.getElementById('formMarca').value;
           item['Model'] = document.getElementById('formModelo').value;
-          item['Numero de Serie'] = document.getElementById('formSerie').value;
+          item['Numero de Serie'] = serie;
           item['RAM'] = document.getElementById('formRAM').value;
           item['CPU'] = document.getElementById('formCPU').value;
           item['Tier Actual'] = document.getElementById('formTier').value;
           item['Años de Vida Remanente'] = document.getElementById('formVida').value;
+
+          logAction('EDICION', `Modificación del equipo S/N: ${serie} asignado a ${responsable}`);
         }
+      } else {
+        logAction('EDICION', `Alta de nuevo equipo S/N: ${serie} asignado a ${responsable}`);
       }
 
       applyFilters();
       closeModal();
-      alert('¡Campos actualizados localmente en la vista!');
+      alert('¡Campos actualizados correctamente!');
     }
 
     function exportCSV() {
@@ -783,6 +897,8 @@
         alert('No hay datos para exportar');
         return;
       }
+
+      logAction('EXPORT', `Exportación de ${filteredData.length} registros en formato CSV`);
 
       const csvContent = Papa.unparse(filteredData);
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
