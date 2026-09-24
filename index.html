@@ -74,7 +74,7 @@
   </div>
 
   <!-- Sidebar Lateral Estilo Rocker -->
-  <aside class="w-60 bg-[#171a1f] border-r border-rocker flex flex-col justify-between shrink-0 z-40 hidden md:flex">
+  <aside class="w-64 bg-[#171a1f] border-r border-rocker flex flex-col justify-between shrink-0 z-40 hidden md:flex">
     <div>
       <div class="h-14 px-6 border-b border-rocker flex items-center justify-between">
         <div class="flex items-center gap-2 font-bold text-white text-base">
@@ -86,23 +86,38 @@
       </div>
 
       <nav class="p-4 space-y-1">
-        <div class="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dashboard</div>
+        <div class="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dashboard Views</div>
         
-        <a href="#" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/20 font-medium">
-          <div class="flex items-center gap-3">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-            <span>Alternate View</span>
-          </div>
-        </a>
+        <button onclick="switchView('global')" id="nav-global" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/20 font-medium transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+          <span>Vista General</span>
+        </button>
+
+        <div class="pt-2 px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Alternate Views</div>
+
+        <button onclick="switchView('area')" id="nav-area" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
+          <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+          <span>Óptica por Área</span>
+        </button>
+
+        <button onclick="switchView('modelo')" id="nav-modelo" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
+          <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m14-6h2m-2 6h2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+          <span>Óptica por Modelo</span>
+        </button>
+
+        <button onclick="switchView('costo')" id="nav-costo" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span>Óptica Financiera / Vida</span>
+        </button>
 
         <div class="pt-4 px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Acciones</div>
 
-        <button onclick="exportCSV()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
+        <button onclick="exportCSV()" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
           <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
           <span>Exportar Datos</span>
         </button>
 
-        <button id="sidebarBtnNuevo" onclick="openModal()" class="w-full items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition hidden">
+        <button id="sidebarBtnNuevo" onclick="openModal()" class="w-full items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition hidden">
           <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
           <span>Nuevo Equipo</span>
         </button>
@@ -152,84 +167,9 @@
     <!-- Main Dashboard Area -->
     <main class="p-6 space-y-6 max-w-[1600px] w-full mx-auto">
 
-      <!-- Charts Principales -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-sm font-bold text-white">Antigüedad y Curva de Vida Remanente</h2>
-            <span class="text-[10px] text-blue-400 font-mono bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">Años Restantes</span>
-          </div>
-          <div class="h-64"><canvas id="chartAntiguedad"></canvas></div>
-        </div>
-
-        <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl flex flex-col justify-between">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-sm font-bold text-white">Diagnóstico de Activos</h2>
-          </div>
-          <div class="h-64"><canvas id="chartDiagnosticoBars"></canvas></div>
-        </div>
-      </div>
-
-      <!-- Donut Chart + Mini KPI Cards -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl flex flex-col justify-between">
-          <div class="flex justify-between items-center mb-2">
-            <h2 class="text-sm font-bold text-white">Distribución por Fabricante</h2>
-          </div>
-          <div class="h-56 relative flex items-center justify-center">
-            <canvas id="chartModelos"></canvas>
-            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span id="donutCenterTotal" class="text-2xl font-black text-white">--</span>
-              <span class="text-[10px] text-slate-500 uppercase tracking-widest">Equipos</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="bg-panel p-4 rounded-xl border border-rocker shadow-xl flex justify-between items-center">
-            <div>
-              <p class="text-[11px] text-slate-400 font-medium">Total Registrados</p>
-              <p id="kpi-total" class="text-2xl font-black text-white mt-1">--</p>
-              <span class="text-[10px] text-emerald-400 font-bold">+100% Sincronizado</span>
-            </div>
-            <div class="p-3 bg-blue-500/10 text-blue-400 rounded-lg">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-            </div>
-          </div>
-
-          <div class="bg-panel p-4 rounded-xl border border-rocker shadow-xl flex justify-between items-center">
-            <div>
-              <p class="text-[11px] text-slate-400 font-medium">Equipos en Riesgo (&lt;1A)</p>
-              <p id="kpi-riesgo" class="text-2xl font-black text-amber-400 mt-1">--</p>
-              <span class="text-[10px] text-amber-400 font-bold">Atención prioritaria</span>
-            </div>
-            <div class="p-3 bg-amber-500/10 text-amber-400 rounded-lg">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-            </div>
-          </div>
-
-          <div class="bg-panel p-4 rounded-xl border border-rocker shadow-xl flex justify-between items-center">
-            <div>
-              <p class="text-[11px] text-slate-400 font-medium">Sobre-especificados</p>
-              <p id="kpi-sobre" class="text-2xl font-black text-indigo-400 mt-1">--</p>
-              <span class="text-[10px] text-indigo-400 font-bold">Capacidad sobrante</span>
-            </div>
-            <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-lg">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-            </div>
-          </div>
-
-          <div class="bg-panel p-4 rounded-xl border border-rocker shadow-xl flex justify-between items-center">
-            <div>
-              <p class="text-[11px] text-slate-400 font-medium">Sub-especificados</p>
-              <p id="kpi-sub" class="text-2xl font-black text-rose-500 mt-1">--</p>
-              <span class="text-[10px] text-rose-500 font-bold">Candidatos a upgrade</span>
-            </div>
-            <div class="p-3 bg-rose-500/10 text-rose-500 rounded-lg">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
-            </div>
-          </div>
-        </div>
+      <!-- VISTA DINÁMICA DE CHARTS SECTORS -->
+      <div id="viewContainer" class="space-y-6">
+        <!-- Generado dinámicamente según la opción de Alternate View -->
       </div>
 
       <!-- Filtros Multicriterio -->
@@ -252,7 +192,7 @@
         </div>
       </div>
 
-      <!-- Tabla de Activos Estilo Rocker -->
+      <!-- Tabla de Activos Estilo Rocker con Columna TIER -->
       <div class="bg-panel rounded-xl border border-rocker shadow-xl overflow-hidden">
         <div class="p-4 border-b border-rocker flex justify-between items-center">
           <h2 class="text-sm font-bold text-white">Listado Completo de Activos</h2>
@@ -269,15 +209,16 @@
                 <th class="p-3">Correo</th>
                 <th class="p-3">Área</th>
                 <th class="p-3">Modelo</th>
-                <th class="p-3">Número de Serie</th>
+                <th class="p-3">Serie</th>
                 <th class="p-3">RAM / CPU</th>
+                <th class="p-3 text-center">Tier (Act / Esp)</th>
                 <th class="p-3 text-center">Vida Rem.</th>
                 <th class="p-3 text-center">Diagnóstico</th>
                 <th class="p-3 text-center">Acción</th>
               </tr>
             </thead>
             <tbody id="inventoryTable" class="divide-y divide-rocker">
-              <tr><td colspan="9" class="text-center p-8 text-slate-600">Inicia sesión para consultar información...</td></tr>
+              <tr><td colspan="10" class="text-center p-8 text-slate-600">Inicia sesión para consultar información...</td></tr>
             </tbody>
           </table>
         </div>
@@ -356,21 +297,21 @@
   <script>
     const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6O7VuFl6hhj6TzvCYlHF5mVq6qQz49oTsFurFP7yINJzTjNddurEHG_GQCVsy4cqEO8ntD_m1WYi-/pub?gid=1154664784&single=true&output=csv';
 
-    // Administradores Autorizados
     const ADMIN_EMAILS = ['guillermo.villanueva@benandfrank.com', 'edgar.rodriguez@benandfrank.com'];
     const ADMIN_BU = 'Tech';
 
     let currentUser = null;
     let isAdmin = false;
+    let activeView = 'global'; // 'global', 'area', 'modelo', 'costo'
 
     let globalData = [];
     let filteredData = [];
     let currentPage = 1;
     const pageSize = 10;
 
-    let chartAntiguedadObj = null;
-    let chartDiagnosticoObj = null;
-    let chartModelosObj = null;
+    let chartObj1 = null;
+    let chartObj2 = null;
+    let chartObj3 = null;
 
     function handleLogin(e) {
       e.preventDefault();
@@ -432,7 +373,6 @@
     }
 
     function populateFilterDropdowns(data) {
-      // Normalizar y remover duplicados (elimina espacios vacíos y recorta espacios innecesarios)
       const areas = [...new Set(data.map(d => (d['Direccion'] || '').trim()).filter(Boolean))].sort();
       const marcas = [...new Set(data.map(d => (d['Marca'] || '').trim()).filter(Boolean))].sort();
 
@@ -443,6 +383,22 @@
       const selMarca = document.getElementById('filterMarca');
       selMarca.innerHTML = '<option value="">Todas las Marcas</option>';
       marcas.forEach(m => selMarca.innerHTML += `<option value="${m}">${m}</option>`);
+    }
+
+    function switchView(viewName) {
+      activeView = viewName;
+      
+      // Resaltar menú activo
+      ['global', 'area', 'modelo', 'costo'].forEach(v => {
+        const btn = document.getElementById(`nav-${v}`);
+        if (v === viewName) {
+          btn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/20 font-medium transition";
+        } else {
+          btn.className = "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition";
+        }
+      });
+
+      renderDashboard(filteredData);
     }
 
     function applyFilters() {
@@ -479,107 +435,198 @@
     document.getElementById('filterDiagnostico').addEventListener('change', applyFilters);
 
     function renderDashboard(data) {
-      document.getElementById('kpi-total').innerText = data.length;
-      document.getElementById('donutCenterTotal').innerText = data.length;
-      document.getElementById('kpi-riesgo').innerText = data.filter(d => parseInt(d['Años de Vida Remanente']) <= 1).length;
-      document.getElementById('kpi-sobre').innerText = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sobre')).length;
-      document.getElementById('kpi-sub').innerText = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sub')).length;
+      const container = document.getElementById('viewContainer');
 
-      // Chart 1: Antigüedad
+      if (chartObj1) chartObj1.destroy();
+      if (chartObj2) chartObj2.destroy();
+      if (chartObj3) chartObj3.destroy();
+
+      if (activeView === 'global') {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-panel p-5 rounded-xl border border-rocker shadow-xl">
+              <div class="flex justify-between items-center mb-4">
+                <h2 class="text-sm font-bold text-white">Antigüedad y Curva de Vida Remanente</h2>
+                <span class="text-[10px] text-blue-400 font-mono bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">Años Restantes</span>
+              </div>
+              <div class="h-64"><canvas id="c1"></canvas></div>
+            </div>
+            <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl flex flex-col justify-between">
+              <h2 class="text-sm font-bold text-white mb-4">Diagnóstico de Activos</h2>
+              <div class="h-64"><canvas id="c2"></canvas></div>
+            </div>
+          </div>
+        `;
+        renderGlobalCharts(data);
+      } 
+      else if (activeView === 'area') {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
+              <h2 class="text-sm font-bold text-purple-400 mb-4">📍 Volumetría de Laptops por Área / Dirección</h2>
+              <div class="h-64"><canvas id="c1"></canvas></div>
+            </div>
+            <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
+              <h2 class="text-sm font-bold text-indigo-400 mb-4">📊 Diagnóstico de Especificación por Área</h2>
+              <div class="h-64"><canvas id="c2"></canvas></div>
+            </div>
+          </div>
+        `;
+        renderAreaCharts(data);
+      }
+      else if (activeView === 'modelo') {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
+              <h2 class="text-sm font-bold text-cyan-400 mb-4">💻 Top 7 Modelos Más Utilizados</h2>
+              <div class="h-64"><canvas id="c1"></canvas></div>
+            </div>
+            <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
+              <h2 class="text-sm font-bold text-teal-400 mb-4">⚙️ Distribución de Memoria RAM</h2>
+              <div class="h-64"><canvas id="c2"></canvas></div>
+            </div>
+          </div>
+        `;
+        renderModeloCharts(data);
+      }
+      else if (activeView === 'costo') {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-panel p-5 rounded-xl border border-rocker shadow-xl">
+              <h2 class="text-sm font-bold text-emerald-400 mb-4">📅 Renovación Tecnológica (Equipos por Año de Expiración)</h2>
+              <div class="h-64"><canvas id="c1"></canvas></div>
+            </div>
+            <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl flex flex-col justify-between">
+              <h2 class="text-sm font-bold text-amber-400 mb-4">⚠️ Salud Global del Parque</h2>
+              <div class="h-64"><canvas id="c2"></canvas></div>
+            </div>
+          </div>
+        `;
+        renderCostoCharts(data);
+      }
+    }
+
+    // Renderizadores de Gráficos Específicos
+    function renderGlobalCharts(data) {
       const vidaCount = {};
       data.forEach(d => {
-        const yrs = d['Años de Vida Remanente'] !== undefined && d['Años de Vida Remanente'] !== '' 
-          ? `${d['Años de Vida Remanente']} Año(s)` 
-          : 'N/D';
+        const yrs = d['Años de Vida Remanente'] !== undefined && d['Años de Vida Remanente'] !== '' ? `${d['Años de Vida Remanente']} Año(s)` : 'N/D';
         vidaCount[yrs] = (vidaCount[yrs] || 0) + 1;
       });
 
-      const ctx1 = document.getElementById('chartAntiguedad').getContext('2d');
+      const ctx1 = document.getElementById('c1').getContext('2d');
       const gradient1 = ctx1.createLinearGradient(0, 0, 0, 200);
       gradient1.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
       gradient1.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
 
-      if (chartAntiguedadObj) chartAntiguedadObj.destroy();
-      chartAntiguedadObj = new Chart(ctx1, {
+      chartObj1 = new Chart(ctx1, {
         type: 'line',
         data: {
           labels: Object.keys(vidaCount),
-          datasets: [{
-            label: 'Equipos',
-            data: Object.values(vidaCount),
-            borderColor: '#3b82f6',
-            borderWidth: 3,
-            backgroundColor: gradient1,
-            fill: true,
-            tension: 0.4,
-            pointRadius: 4,
-            pointBackgroundColor: '#3b82f6'
-          }]
+          datasets: [{ label: 'Equipos', data: Object.values(vidaCount), borderColor: '#3b82f6', borderWidth: 3, backgroundColor: gradient1, fill: true, tension: 0.4 }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { ticks: { color: '#64748b' }, grid: { display: false } },
-            y: { ticks: { color: '#64748b' }, grid: { color: '#242830' } }
-          }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#64748b' } }, y: { ticks: { color: '#64748b' }, grid: { color: '#242830' } } } }
       });
 
-      // Chart 2: Diagnóstico
       const correctos = data.filter(d => !(d['Actual vs Esperado'] || '').toLowerCase().includes('sobre') && !(d['Actual vs Esperado'] || '').toLowerCase().includes('sub')).length;
       const sobre = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sobre')).length;
       const sub = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sub')).length;
 
-      if (chartDiagnosticoObj) chartDiagnosticoObj.destroy();
-      chartDiagnosticoObj = new Chart(document.getElementById('chartDiagnosticoBars'), {
+      chartObj2 = new Chart(document.getElementById('c2'), {
         type: 'bar',
         data: {
           labels: ['Correcto', 'Sobre-esp.', 'Sub-esp.'],
-          datasets: [{
-            data: [correctos, sobre, sub],
-            backgroundColor: ['#10b981', '#6366f1', '#f43f5e'],
-            borderRadius: 8,
-            barThickness: 24
-          }]
+          datasets: [{ data: [correctos, sobre, sub], backgroundColor: ['#10b981', '#6366f1', '#f43f5e'], borderRadius: 8, barThickness: 28 }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { ticks: { color: '#64748b' }, grid: { display: false } },
-            y: { ticks: { color: '#64748b' }, grid: { color: '#242830' } }
-          }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#64748b' } }, y: { ticks: { color: '#64748b' }, grid: { color: '#242830' } } } }
       });
+    }
 
-      // Chart 3: Donut Modelos
-      const marcasCount = {};
+    function renderAreaCharts(data) {
+      const areaCount = {};
       data.forEach(d => {
-        const marca = (d['Marca'] || 'Otra').trim();
-        marcasCount[marca] = (marcasCount[marca] || 0) + 1;
+        const a = (d['Direccion'] || 'N/D').trim();
+        areaCount[a] = (areaCount[a] || 0) + 1;
       });
 
-      if (chartModelosObj) chartModelosObj.destroy();
-      chartModelosObj = new Chart(document.getElementById('chartModelos'), {
+      chartObj1 = new Chart(document.getElementById('c1'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(areaCount),
+          datasets: [{ label: 'Equipos', data: Object.values(areaCount), backgroundColor: '#a855f7', borderRadius: 6 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: '#242830' } } } }
+      });
+
+      chartObj2 = new Chart(document.getElementById('c2'), {
         type: 'doughnut',
         data: {
-          labels: Object.keys(marcasCount),
-          datasets: [{
-            data: Object.values(marcasCount),
-            backgroundColor: ['#10b981', '#00e5ff', '#ff0055', '#a855f7'],
-            borderWidth: 0,
-            hoverOffset: 4
-          }]
+          labels: Object.keys(areaCount).slice(0, 5),
+          datasets: [{ data: Object.values(areaCount).slice(0, 5), backgroundColor: ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ec4899'] }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '75%',
-          plugins: { legend: { position: 'bottom', labels: { color: '#9ea4b0', font: { size: 10 } } } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ea4b0' } } } }
+      });
+    }
+
+    function renderModeloCharts(data) {
+      const modCount = {};
+      data.forEach(d => {
+        const m = `${d['Marca'] || ''} ${d['Model'] || d['Tipo'] || ''}`.trim() || 'Otro';
+        modCount[m] = (modCount[m] || 0) + 1;
+      });
+
+      chartObj1 = new Chart(document.getElementById('c1'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(modCount).slice(0, 7),
+          datasets: [{ label: 'Cantidad', data: Object.values(modCount).slice(0, 7), backgroundColor: '#06b6d4', borderRadius: 6 }]
+        },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } } }
+      });
+
+      const ramCount = {};
+      data.forEach(d => {
+        const r = d['RAM'] ? d['RAM'].trim() : 'N/D';
+        ramCount[r] = (ramCount[r] || 0) + 1;
+      });
+
+      chartObj2 = new Chart(document.getElementById('c2'), {
+        type: 'pie',
+        data: {
+          labels: Object.keys(ramCount),
+          datasets: [{ data: Object.values(ramCount), backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ea4b0' } } } }
+      });
+    }
+
+    function renderCostoCharts(data) {
+      const renoCount = { 'Reemplazo Inmediato (<1A)': 0, 'Sostenible (2-3A)': 0, 'Óptimo (4A+)': 0 };
+      data.forEach(d => {
+        const v = parseInt(d['Años de Vida Remanente']);
+        if (!isNaN(v)) {
+          if (v <= 1) renoCount['Reemplazo Inmediato (<1A)']++;
+          else if (v <= 3) renoCount['Sostenible (2-3A)']++;
+          else renoCount['Óptimo (4A+)']++;
         }
+      });
+
+      chartObj1 = new Chart(document.getElementById('c1'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(renoCount),
+          datasets: [{ label: 'Equipos', data: Object.values(renoCount), backgroundColor: ['#ef4444', '#f59e0b', '#10b981'], borderRadius: 8 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } } }
+      });
+
+      chartObj2 = new Chart(document.getElementById('c2'), {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(renoCount),
+          datasets: [{ data: Object.values(renoCount), backgroundColor: ['#ef4444', '#f59e0b', '#10b981'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#9ea4b0', font: { size: 9 } } } } }
       });
     }
 
@@ -591,12 +638,15 @@
       const pageItems = filteredData.slice(start, start + pageSize);
 
       if (pageItems.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center p-8 text-slate-600">Sin coincidencias encontradas</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center p-8 text-slate-600">Sin coincidencias encontradas</td></tr>';
       } else {
         pageItems.forEach((row) => {
           const diag = row['Actual vs Esperado'] || 'Correcto';
           const isSub = diag.toLowerCase().includes('sub');
           const isSobre = diag.toLowerCase().includes('sobre');
+
+          const tierAct = row['Tier Actual'] || 'T1';
+          const tierEsp = row['Tier Esperado'] || 'T1';
 
           const actionBtn = isAdmin
             ? `<button onclick="editAsset(${row._rowIndex})" class="text-blue-400 hover:text-white border border-blue-500/30 px-2.5 py-1 rounded hover:bg-blue-600/20 transition text-[10px]">Editar</button>`
@@ -611,6 +661,9 @@
             <td class="p-3 font-medium text-slate-200">${row['Marca'] || ''} ${row['Model'] || row['Tipo'] || ''}</td>
             <td class="p-3 font-mono text-slate-400 text-[11px]">${row['Numero de Serie'] || 'N/A'}</td>
             <td class="p-3 text-slate-400 text-[11px]">${row['RAM'] || ''} / ${row['CPU'] || ''}</td>
+            <td class="p-3 text-center font-mono font-bold">
+              <span class="text-blue-400">${tierAct}</span> <span class="text-slate-600">/</span> <span class="text-slate-400">${tierEsp}</span>
+            </td>
             <td class="p-3 text-center font-bold text-white">${row['Años de Vida Remanente'] ?? 'N/D'}</td>
             <td class="p-3 text-center">
               <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
