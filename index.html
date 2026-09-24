@@ -26,7 +26,6 @@
     .border-rocker {
       border-color: #242830;
     }
-    /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: #0f1115; }
     ::-webkit-scrollbar-thumb { background: #2b303c; border-radius: 4px; }
@@ -35,10 +34,48 @@
 </head>
 <body class="font-sans antialiased flex h-screen overflow-hidden text-xs">
 
+  <!-- MODAL DE LOGIN OBLIGATORIO -->
+  <div id="loginModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-panel border border-rocker rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 bg-blue-600/20 text-blue-400 rounded-xl mx-auto flex items-center justify-center font-bold text-xl mb-3 border border-blue-500/30">
+          G
+        </div>
+        <h2 class="text-lg font-bold text-white">Acceso a Inventario Galileo</h2>
+        <p class="text-xs text-slate-400">Ingresa tu correo corporativo y BU para continuar</p>
+      </div>
+
+      <form onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-slate-400 mb-1 font-medium">Correo Electrónico</label>
+          <input type="email" id="loginMail" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3.5 py-2.5 rounded-lg focus:outline-none focus:border-blue-500 text-xs" placeholder="nombre@benandfrank.com">
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1 font-medium">Unidad de Negocio (BU)</label>
+          <select id="loginBU" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3.5 py-2.5 rounded-lg focus:outline-none focus:border-blue-500 text-xs">
+            <option value="" disabled selected>Selecciona tu BU...</option>
+            <option value="Operaciones">Operaciones</option>
+            <option value="HQ">HQ</option>
+            <option value="Retail">Retail</option>
+            <option value="Finanzas">Finanzas</option>
+            <option value="Estrategia">Estrategia</option>
+            <option value="Recursos Humanos">Recursos Humanos</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Tech">Tech</option>
+          </select>
+        </div>
+
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg transition shadow-lg shadow-blue-600/20">
+          Ingresar al Portal
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- Sidebar Lateral Estilo Rocker -->
   <aside class="w-60 bg-[#171a1f] border-r border-rocker flex flex-col justify-between shrink-0 z-40 hidden md:flex">
     <div>
-      <!-- Brand Header -->
       <div class="h-14 px-6 border-b border-rocker flex items-center justify-between">
         <div class="flex items-center gap-2 font-bold text-white text-base">
           <span class="text-blue-500">
@@ -48,7 +85,6 @@
         </div>
       </div>
 
-      <!-- Navigation Links -->
       <nav class="p-4 space-y-1">
         <div class="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dashboard</div>
         
@@ -59,16 +95,22 @@
           </div>
         </a>
 
-        <div class="pt-4 px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Acciones Directas</div>
+        <div class="pt-4 px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Acciones</div>
 
-        <button onclick="openModal()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
-          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        <!-- Botón accesible para todos -->
+        <button onclick="exportCSV()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+          <span>Exportar Datos</span>
+        </button>
+
+        <!-- Botón visible SOLO para Admins -->
+        <button id="sidebarBtnNuevo" onclick="openModal()" class="w-full items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition hidden">
+          <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
           <span>Nuevo Equipo</span>
         </button>
       </nav>
     </div>
 
-    <!-- Footer Sidebar -->
     <div class="p-4 border-t border-rocker text-[10px] text-slate-600">
       Galileo ITAM © 2026
     </div>
@@ -88,15 +130,23 @@
         </div>
       </div>
 
-      <!-- User Info -->
+      <!-- Informacion Usuario / Perfil -->
       <div class="flex items-center gap-4">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-rose-500 to-amber-400 flex items-center justify-center text-white font-bold text-xs shadow-md">
-            GV
+        <button onclick="exportCSV()" class="bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+          Descargar CSV
+        </button>
+
+        <div class="flex items-center gap-2 border-l border-rocker pl-4">
+          <div id="userAvatar" class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-xs shadow-md uppercase">
+            --
           </div>
           <div class="hidden sm:block text-left">
-            <p class="text-white font-bold leading-none text-xs">Guillermo V.</p>
-            <p class="text-[10px] text-slate-500">Service Desk Lead</p>
+            <p id="userMailDisplay" class="text-white font-bold leading-none text-xs">Cargando...</p>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <span id="userBUDisplay" class="text-[10px] text-slate-500">--</span>
+              <span id="userRoleBadge" class="text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.2 rounded uppercase font-mono">Lector</span>
+            </div>
           </div>
         </div>
       </div>
@@ -105,37 +155,26 @@
     <!-- Main Dashboard Area -->
     <main class="p-6 space-y-6 max-w-[1600px] w-full mx-auto">
 
-      <!-- Fila 1: Charts Principales estilo Rocker -->
+      <!-- Charts Principales -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- Gráfico 1: Antigüedad de Vida Remanente (Area Smooth Chart) -->
         <div class="lg:col-span-2 bg-panel p-5 rounded-xl border border-rocker shadow-xl">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-sm font-bold text-white">Antigüedad y Curva de Vida Remanente</h2>
             <span class="text-[10px] text-blue-400 font-mono bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">Años Restantes</span>
           </div>
-          <div class="h-64">
-            <canvas id="chartAntiguedad"></canvas>
-          </div>
+          <div class="h-64"><canvas id="chartAntiguedad"></canvas></div>
         </div>
 
-        <!-- Gráfico 2: Diagnóstico Status Bar Verticals -->
         <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl flex flex-col justify-between">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-sm font-bold text-white">Diagnóstico de Activos</h2>
-            <span class="text-slate-500">•••</span>
           </div>
-          <div class="h-64">
-            <canvas id="chartDiagnosticoBars"></canvas>
-          </div>
+          <div class="h-64"><canvas id="chartDiagnosticoBars"></canvas></div>
         </div>
-
       </div>
 
-      <!-- Fila 2: Donut Chart + Mini KPI Cards Grid -->
+      <!-- Donut Chart + Mini KPI Cards -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- Donut Chart Modelos -->
         <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl flex flex-col justify-between">
           <div class="flex justify-between items-center mb-2">
             <h2 class="text-sm font-bold text-white">Distribución por Fabricante</h2>
@@ -149,9 +188,7 @@
           </div>
         </div>
 
-        <!-- 4 Mini KPI Cards Estilo Rocker -->
         <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          
           <div class="bg-panel p-4 rounded-xl border border-rocker shadow-xl flex justify-between items-center">
             <div>
               <p class="text-[11px] text-slate-400 font-medium">Total Registrados</p>
@@ -195,9 +232,7 @@
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
             </div>
           </div>
-
         </div>
-
       </div>
 
       <!-- Filtros Multicriterio -->
@@ -224,7 +259,7 @@
       <div class="bg-panel rounded-xl border border-rocker shadow-xl overflow-hidden">
         <div class="p-4 border-b border-rocker flex justify-between items-center">
           <h2 class="text-sm font-bold text-white">Listado Completo de Activos</h2>
-          <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-3 py-1.5 rounded-lg text-xs transition">
+          <button id="mainBtnNuevo" onclick="openModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-3 py-1.5 rounded-lg text-xs transition hidden">
             + Nuevo Equipo
           </button>
         </div>
@@ -244,7 +279,7 @@
               </tr>
             </thead>
             <tbody id="inventoryTable" class="divide-y divide-rocker">
-              <tr><td colspan="8" class="text-center p-8 text-slate-500">Cargando datos desde Google Sheets...</td></tr>
+              <tr><td colspan="8" class="text-center p-8 text-slate-600">Inicia sesión para consultar información...</td></tr>
             </tbody>
           </table>
         </div>
@@ -323,6 +358,13 @@
   <script>
     const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6O7VuFl6hhj6TzvCYlHF5mVq6qQz49oTsFurFP7yINJzTjNddurEHG_GQCVsy4cqEO8ntD_m1WYi-/pub?gid=1154664784&single=true&output=csv';
 
+    // Lista de Administradores Autorizados
+    const ADMIN_EMAILS = ['guillermo.villanueva@benandfrank.com', 'edgar.rodriguez@benandfrank.com'];
+    const ADMIN_BU = 'Tech';
+
+    let currentUser = null;
+    let isAdmin = false;
+
     let globalData = [];
     let filteredData = [];
     let currentPage = 1;
@@ -332,7 +374,38 @@
     let chartDiagnosticoObj = null;
     let chartModelosObj = null;
 
-    window.addEventListener('DOMContentLoaded', fetchData);
+    function handleLogin(e) {
+      e.preventDefault();
+      const mail = document.getElementById('loginMail').value.trim().toLowerCase();
+      const bu = document.getElementById('loginBU').value;
+
+      if (!mail || !bu) return;
+
+      currentUser = { mail, bu };
+      isAdmin = ADMIN_EMAILS.includes(mail) && bu === ADMIN_BU;
+
+      // Actualizar UI según el rol
+      document.getElementById('loginModal').classList.add('hidden');
+      document.getElementById('userMailDisplay').innerText = mail;
+      document.getElementById('userBUDisplay').innerText = bu;
+      document.getElementById('userAvatar').innerText = mail.substring(0, 2).toUpperCase();
+
+      const badge = document.getElementById('userRoleBadge');
+      if (isAdmin) {
+        badge.innerText = 'Admin';
+        badge.className = 'text-[9px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-1.5 py-0.2 rounded uppercase font-mono font-bold';
+        document.getElementById('mainBtnNuevo').classList.remove('hidden');
+        document.getElementById('sidebarBtnNuevo').classList.remove('hidden');
+        document.getElementById('sidebarBtnNuevo').classList.add('flex');
+      } else {
+        badge.innerText = 'Lector';
+        badge.className = 'text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.2 rounded uppercase font-mono';
+        document.getElementById('mainBtnNuevo').classList.add('hidden');
+        document.getElementById('sidebarBtnNuevo').classList.add('hidden');
+      }
+
+      fetchData();
+    }
 
     function fetchData() {
       Papa.parse(SHEET_CSV_URL, {
@@ -411,7 +484,7 @@
       document.getElementById('kpi-sobre').innerText = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sobre')).length;
       document.getElementById('kpi-sub').innerText = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sub')).length;
 
-      // Chart 1: Antigüedad Smooth Curve (Estilo Rocker)
+      // Chart 1: Antigüedad Smooth Curve
       const vidaCount = {};
       data.forEach(d => {
         const yrs = d['Años de Vida Remanente'] !== undefined && d['Años de Vida Remanente'] !== '' 
@@ -524,6 +597,11 @@
           const isSub = diag.toLowerCase().includes('sub');
           const isSobre = diag.toLowerCase().includes('sobre');
 
+          // Renderizar botón de edición solo para administradores
+          const actionBtn = isAdmin
+            ? `<button onclick="editAsset(${row._rowIndex})" class="text-blue-400 hover:text-white border border-blue-500/30 px-2.5 py-1 rounded hover:bg-blue-600/20 transition text-[10px]">Editar</button>`
+            : `<span class="text-slate-600 text-[10px]">Solo Lectura</span>`;
+
           const tr = document.createElement('tr');
           tr.className = "bg-panel-hover transition-colors";
           tr.innerHTML = `
@@ -541,11 +619,7 @@
                 ${diag}
               </span>
             </td>
-            <td class="p-3 text-center">
-              <button onclick="editAsset(${row._rowIndex})" class="text-blue-400 hover:text-white border border-blue-500/30 px-2 py-0.5 rounded hover:bg-blue-600/20 transition text-[10px]">
-                Editar
-              </button>
-            </td>
+            <td class="p-3 text-center">${actionBtn}</td>
           `;
           tbody.appendChild(tr);
         });
@@ -562,6 +636,7 @@
     function nextPage() { if (currentPage * pageSize < filteredData.length) { currentPage++; renderTable(); } }
 
     function openModal(item = null) {
+      if (!isAdmin) return;
       document.getElementById('assetModal').classList.remove('hidden');
       if (item) {
         document.getElementById('modalTitle').innerText = 'Editar Equipo Existent';
@@ -586,14 +661,34 @@
     }
 
     function editAsset(index) {
+      if (!isAdmin) return;
       const item = globalData.find(d => d._rowIndex === index);
       if (item) openModal(item);
     }
 
     function saveAsset(e) {
       e.preventDefault();
+      if (!isAdmin) return;
       alert('⚠️ Para guardar cambios en tiempo real en Google Sheets requerimos habilitar Google Apps Script.');
       closeModal();
+    }
+
+    // Función para Exportar Información en CSV
+    function exportCSV() {
+      if (filteredData.length === 0) {
+        alert('No hay datos para exportar');
+        return;
+      }
+
+      const csvContent = Papa.unparse(filteredData);
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Inventario_Galileo_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   </script>
 </body>
