@@ -97,13 +97,11 @@
 
         <div class="pt-4 px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Acciones</div>
 
-        <!-- Botón accesible para todos -->
         <button onclick="exportCSV()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
           <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
           <span>Exportar Datos</span>
         </button>
 
-        <!-- Botón visible SOLO para Admins -->
         <button id="sidebarBtnNuevo" onclick="openModal()" class="w-full items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition hidden">
           <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
           <span>Nuevo Equipo</span>
@@ -130,7 +128,6 @@
         </div>
       </div>
 
-      <!-- Informacion Usuario / Perfil -->
       <div class="flex items-center gap-4">
         <button onclick="exportCSV()" class="bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
@@ -269,6 +266,7 @@
             <thead class="bg-[#0f1115] text-slate-400 uppercase tracking-wider border-b border-rocker text-[10px]">
               <tr>
                 <th class="p-3">Responsable</th>
+                <th class="p-3">Correo</th>
                 <th class="p-3">Área</th>
                 <th class="p-3">Modelo</th>
                 <th class="p-3">Número de Serie</th>
@@ -279,7 +277,7 @@
               </tr>
             </thead>
             <tbody id="inventoryTable" class="divide-y divide-rocker">
-              <tr><td colspan="8" class="text-center p-8 text-slate-600">Inicia sesión para consultar información...</td></tr>
+              <tr><td colspan="9" class="text-center p-8 text-slate-600">Inicia sesión para consultar información...</td></tr>
             </tbody>
           </table>
         </div>
@@ -358,7 +356,7 @@
   <script>
     const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6O7VuFl6hhj6TzvCYlHF5mVq6qQz49oTsFurFP7yINJzTjNddurEHG_GQCVsy4cqEO8ntD_m1WYi-/pub?gid=1154664784&single=true&output=csv';
 
-    // Lista de Administradores Autorizados
+    // Administradores Autorizados
     const ADMIN_EMAILS = ['guillermo.villanueva@benandfrank.com', 'edgar.rodriguez@benandfrank.com'];
     const ADMIN_BU = 'Tech';
 
@@ -384,7 +382,6 @@
       currentUser = { mail, bu };
       isAdmin = ADMIN_EMAILS.includes(mail) && bu === ADMIN_BU;
 
-      // Actualizar UI según el rol
       document.getElementById('loginModal').classList.add('hidden');
       document.getElementById('userMailDisplay').innerText = mail;
       document.getElementById('userBUDisplay').innerText = bu;
@@ -435,8 +432,9 @@
     }
 
     function populateFilterDropdowns(data) {
-      const areas = [...new Set(data.map(d => d['Direccion']).filter(Boolean))].sort();
-      const marcas = [...new Set(data.map(d => d['Marca']).filter(Boolean))].sort();
+      // Normalizar y remover duplicados (elimina espacios vacíos y recorta espacios innecesarios)
+      const areas = [...new Set(data.map(d => (d['Direccion'] || '').trim()).filter(Boolean))].sort();
+      const marcas = [...new Set(data.map(d => (d['Marca'] || '').trim()).filter(Boolean))].sort();
 
       const selArea = document.getElementById('filterArea');
       selArea.innerHTML = '<option value="">Todas las Áreas / Direcciones</option>';
@@ -454,14 +452,17 @@
       const diag = document.getElementById('filterDiagnostico').value;
 
       filteredData = globalData.filter(d => {
+        const itemArea = (d['Direccion'] || '').trim();
+        const itemMarca = (d['Marca'] || '').trim();
+
         const matchesSearch = !search || 
           (d['Responsable del activo'] || '').toLowerCase().includes(search) ||
           (d['Numero de Serie'] || '').toLowerCase().includes(search) ||
           (d['Model'] || d['Tipo'] || '').toLowerCase().includes(search) ||
           (d['Mail'] || '').toLowerCase().includes(search);
 
-        const matchesArea = !area || d['Direccion'] === area;
-        const matchesMarca = !marca || d['Marca'] === marca;
+        const matchesArea = !area || itemArea === area;
+        const matchesMarca = !marca || itemMarca === marca;
         const matchesDiag = !diag || (d['Actual vs Esperado'] || '').toLowerCase().includes(diag.toLowerCase());
 
         return matchesSearch && matchesArea && matchesMarca && matchesDiag;
@@ -484,7 +485,7 @@
       document.getElementById('kpi-sobre').innerText = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sobre')).length;
       document.getElementById('kpi-sub').innerText = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sub')).length;
 
-      // Chart 1: Antigüedad Smooth Curve
+      // Chart 1: Antigüedad
       const vidaCount = {};
       data.forEach(d => {
         const yrs = d['Años de Vida Remanente'] !== undefined && d['Años de Vida Remanente'] !== '' 
@@ -526,7 +527,7 @@
         }
       });
 
-      // Chart 2: Vertical Status Bars
+      // Chart 2: Diagnóstico
       const correctos = data.filter(d => !(d['Actual vs Esperado'] || '').toLowerCase().includes('sobre') && !(d['Actual vs Esperado'] || '').toLowerCase().includes('sub')).length;
       const sobre = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sobre')).length;
       const sub = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sub')).length;
@@ -557,7 +558,7 @@
       // Chart 3: Donut Modelos
       const marcasCount = {};
       data.forEach(d => {
-        const marca = d['Marca'] || 'Otra';
+        const marca = (d['Marca'] || 'Otra').trim();
         marcasCount[marca] = (marcasCount[marca] || 0) + 1;
       });
 
@@ -590,14 +591,13 @@
       const pageItems = filteredData.slice(start, start + pageSize);
 
       if (pageItems.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center p-8 text-slate-600">Sin coincidencias encontradas</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center p-8 text-slate-600">Sin coincidencias encontradas</td></tr>';
       } else {
         pageItems.forEach((row) => {
           const diag = row['Actual vs Esperado'] || 'Correcto';
           const isSub = diag.toLowerCase().includes('sub');
           const isSobre = diag.toLowerCase().includes('sobre');
 
-          // Renderizar botón de edición solo para administradores
           const actionBtn = isAdmin
             ? `<button onclick="editAsset(${row._rowIndex})" class="text-blue-400 hover:text-white border border-blue-500/30 px-2.5 py-1 rounded hover:bg-blue-600/20 transition text-[10px]">Editar</button>`
             : `<span class="text-slate-600 text-[10px]">Solo Lectura</span>`;
@@ -605,8 +605,9 @@
           const tr = document.createElement('tr');
           tr.className = "bg-panel-hover transition-colors";
           tr.innerHTML = `
-            <td class="p-3 font-semibold text-white">${row['Responsable del activo'] || row['Mail'] || 'N/A'}</td>
-            <td class="p-3 text-slate-400">${row['Direccion'] || 'N/A'}</td>
+            <td class="p-3 font-semibold text-white">${row['Responsable del activo'] || 'N/A'}</td>
+            <td class="p-3 text-slate-400 font-mono text-[11px]">${row['Mail'] || 'N/A'}</td>
+            <td class="p-3 text-slate-400">${(row['Direccion'] || 'N/A').trim()}</td>
             <td class="p-3 font-medium text-slate-200">${row['Marca'] || ''} ${row['Model'] || row['Tipo'] || ''}</td>
             <td class="p-3 font-mono text-slate-400 text-[11px]">${row['Numero de Serie'] || 'N/A'}</td>
             <td class="p-3 text-slate-400 text-[11px]">${row['RAM'] || ''} / ${row['CPU'] || ''}</td>
@@ -643,8 +644,8 @@
         document.getElementById('editRowIndex').value = item._rowIndex;
         document.getElementById('formMail').value = item['Mail'] || '';
         document.getElementById('formResponsable').value = item['Responsable del activo'] || '';
-        document.getElementById('formDireccion').value = item['Direccion'] || '';
-        document.getElementById('formMarca').value = item['Marca'] || 'Lenovo';
+        document.getElementById('formDireccion').value = (item['Direccion'] || '').trim();
+        document.getElementById('formMarca').value = (item['Marca'] || 'Lenovo').trim();
         document.getElementById('formModelo').value = item['Model'] || item['Tipo'] || '';
         document.getElementById('formSerie').value = item['Numero de Serie'] || '';
         document.getElementById('formRAM').value = item['RAM'] || '';
@@ -673,7 +674,6 @@
       closeModal();
     }
 
-    // Función para Exportar Información en CSV
     function exportCSV() {
       if (filteredData.length === 0) {
         alert('No hay datos para exportar');
