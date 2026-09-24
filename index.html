@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Inventario Galileo - Rocker Admin</title>
+
+  <!-- Favicon Dinámico Isotipo "IG" -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23171a1f'/><circle cx='50' cy='50' r='42' fill='none' stroke='%233b82f6' stroke-width='4'/><text x='30' y='68' font-family='Arial, sans-serif' font-weight='900' font-size='50' fill='%233b82f6'>I</text><text x='48' y='68' font-family='Arial, sans-serif' font-weight='900' font-size='50' fill='%23ffffff'>G</text></svg>" />
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -38,8 +41,8 @@
   <div id="loginModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-panel border border-rocker rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
       <div class="text-center space-y-1">
-        <div class="w-12 h-12 bg-blue-600/20 text-blue-400 rounded-xl mx-auto flex items-center justify-center font-bold text-xl mb-3 border border-blue-500/30">
-          G
+        <div class="w-14 h-14 bg-[#0f1115] border border-blue-500/40 rounded-2xl mx-auto flex items-center justify-center font-black text-2xl mb-3 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+          <span class="text-blue-500">I</span><span class="text-white">G</span>
         </div>
         <h2 class="text-lg font-bold text-white">Acceso a Inventario Galileo</h2>
         <p class="text-xs text-slate-400">Ingresa tu correo corporativo y BU para continuar</p>
@@ -77,10 +80,10 @@
   <aside class="w-64 bg-[#171a1f] border-r border-rocker flex flex-col justify-between shrink-0 z-40 hidden md:flex">
     <div>
       <div class="h-14 px-6 border-b border-rocker flex items-center justify-between">
-        <div class="flex items-center gap-2 font-bold text-white text-base">
-          <span class="text-blue-500">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-          </span>
+        <div class="flex items-center gap-2.5 font-bold text-white text-base">
+          <div class="w-8 h-8 bg-[#0f1115] border border-blue-500/50 rounded-xl flex items-center justify-center font-black text-sm tracking-tighter">
+            <span class="text-blue-500">I</span><span class="text-white">G</span>
+          </div>
           Rocker <span class="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded uppercase tracking-wider font-mono">ITAM</span>
         </div>
       </div>
@@ -167,19 +170,14 @@
     <!-- Main Dashboard Area -->
     <main class="p-6 space-y-6 max-w-[1600px] w-full mx-auto">
 
-      <!-- VISTA DINÁMICA DE CHARTS SECTORS -->
       <div id="viewContainer" class="space-y-6">
         <!-- Generado dinámicamente -->
       </div>
 
-      <!-- Filtros Multicriterio con Buscadores Específicos por Nombre y Mail -->
+      <!-- Filtros Multicriterio -->
       <div class="bg-panel p-4 rounded-xl border border-rocker shadow-xl space-y-3">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          
-          <!-- Buscador Específico por Nombre -->
           <input type="text" id="filterNombre" placeholder="👤 Buscar por Nombre..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
-
-          <!-- Buscador Específico por Mail -->
           <input type="text" id="filterMail" placeholder="✉️ Buscar por Correo..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
 
           <select id="filterArea" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs">
@@ -196,11 +194,10 @@
             <option value="Sobre">Sobre-especificado</option>
             <option value="Sub">Sub-especificado</option>
           </select>
-
         </div>
       </div>
 
-      <!-- Tabla de Activos Estilo Rocker con Columna TIER ACTUAL y CORREO -->
+      <!-- Tabla de Activos Estilo Rocker -->
       <div class="bg-panel rounded-xl border border-rocker shadow-xl overflow-hidden">
         <div class="p-4 border-b border-rocker flex justify-between items-center">
           <h2 class="text-sm font-bold text-white">Listado Completo de Activos</h2>
@@ -245,30 +242,33 @@
     </main>
   </div>
 
-  <!-- Modal para Altas / Edición -->
+  <!-- Modal para Altas / Edición COMPLETA de todos los campos -->
   <div id="assetModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-    <div class="bg-panel border border-rocker rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col">
+    <div class="bg-panel border border-rocker rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col">
       <div class="p-4 border-b border-rocker flex justify-between items-center bg-[#0f1115]">
-        <h3 id="modalTitle" class="font-bold text-sm text-white">Registrar Equipo</h3>
+        <h3 id="modalTitle" class="font-bold text-sm text-white">Registrar / Editar Equipo</h3>
         <button onclick="closeModal()" class="text-slate-500 hover:text-white">✕</button>
       </div>
 
-      <form id="assetForm" onsubmit="saveAsset(event)" class="p-6 space-y-4 text-xs">
+      <form id="assetForm" onsubmit="saveAsset(event)" class="p-6 space-y-4 text-xs max-h-[80vh] overflow-y-auto">
         <input type="hidden" id="editRowIndex" />
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
+            <label class="block text-slate-400 mb-1">Responsable del Activo</label>
+            <input type="text" id="formResponsable" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Apellido, Nombre">
+          </div>
+
+          <div>
             <label class="block text-slate-400 mb-1">Correo Colaborador</label>
             <input type="email" id="formMail" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="correo@benandfrank.com">
           </div>
-          <div>
-            <label class="block text-slate-400 mb-1">Responsable</label>
-            <input type="text" id="formResponsable" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Apellido, Nombre">
-          </div>
+
           <div>
             <label class="block text-slate-400 mb-1">Dirección / Área</label>
-            <input type="text" id="formDireccion" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Tech, Marketing...">
+            <input type="text" id="formDireccion" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Tech, Marketing, RH...">
           </div>
+
           <div>
             <label class="block text-slate-400 mb-1">Marca</label>
             <select id="formMarca" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500">
@@ -276,21 +276,42 @@
               <option value="Apple">Apple</option>
             </select>
           </div>
+
           <div>
             <label class="block text-slate-400 mb-1">Modelo / Tipo</label>
             <input type="text" id="formModelo" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="ThinkPad E14, MacBook Pro...">
           </div>
+
           <div>
             <label class="block text-slate-400 mb-1">Número de Serie</label>
             <input type="text" id="formSerie" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="PF489XM1">
           </div>
+
           <div>
-            <label class="block text-slate-400 mb-1">RAM</label>
+            <label class="block text-slate-400 mb-1">Memoria RAM</label>
             <input type="text" id="formRAM" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="16 GB">
           </div>
+
           <div>
             <label class="block text-slate-400 mb-1">CPU / Procesador</label>
             <input type="text" id="formCPU" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Apple M1, Ryzen 7...">
+          </div>
+
+          <div>
+            <label class="block text-slate-400 mb-1">Tier Actual</label>
+            <select id="formTier" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500">
+              <option value="T1">T1 (Campo / Operación)</option>
+              <option value="T2">T2 (Analistas / Coordinadores)</option>
+              <option value="T3">T3 (QA / Product Manager)</option>
+              <option value="T4">T4 (Dev / Design)</option>
+              <option value="T5">T5 (Ejecutivos / Legion)</option>
+              <option value="T6">T6 (Alta Gama M4)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 mb-1">Años de Vida Remanente</label>
+            <input type="number" id="formVida" min="0" max="6" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="0 a 5 años">
           </div>
         </div>
 
@@ -656,7 +677,6 @@
           const isSub = diag.toLowerCase().includes('sub');
           const isSobre = diag.toLowerCase().includes('sobre');
 
-          // TIER ACTUAL ÚNICO
           const tierAct = row['Tier Actual'] || 'T1';
 
           const actionBtn = isAdmin
@@ -702,18 +722,20 @@
       if (!isAdmin) return;
       document.getElementById('assetModal').classList.remove('hidden');
       if (item) {
-        document.getElementById('modalTitle').innerText = 'Editar Equipo Existent';
+        document.getElementById('modalTitle').innerText = 'Editar Todos los Datos del Equipo';
         document.getElementById('editRowIndex').value = item._rowIndex;
-        document.getElementById('formMail').value = item['Mail'] || '';
         document.getElementById('formResponsable').value = item['Responsable del activo'] || '';
+        document.getElementById('formMail').value = item['Mail'] || '';
         document.getElementById('formDireccion').value = (item['Direccion'] || '').trim();
         document.getElementById('formMarca').value = (item['Marca'] || 'Lenovo').trim();
         document.getElementById('formModelo').value = item['Model'] || item['Tipo'] || '';
         document.getElementById('formSerie').value = item['Numero de Serie'] || '';
         document.getElementById('formRAM').value = item['RAM'] || '';
         document.getElementById('formCPU').value = item['CPU'] || '';
+        document.getElementById('formTier').value = item['Tier Actual'] || 'T1';
+        document.getElementById('formVida').value = item['Años de Vida Remanente'] || '0';
       } else {
-        document.getElementById('modalTitle').innerText = 'Registrar Equipo';
+        document.getElementById('modalTitle').innerText = 'Registrar Equipo Nuevo';
         document.getElementById('assetForm').reset();
         document.getElementById('editRowIndex').value = '';
       }
@@ -732,8 +754,28 @@
     function saveAsset(e) {
       e.preventDefault();
       if (!isAdmin) return;
-      alert('⚠️ Para guardar cambios en tiempo real en Google Sheets requerimos habilitar Google Apps Script.');
+      
+      // Actualización Local en Cliente
+      const rIdx = document.getElementById('editRowIndex').value;
+      if (rIdx !== '') {
+        const item = globalData.find(d => d._rowIndex === parseInt(rIdx));
+        if (item) {
+          item['Responsable del activo'] = document.getElementById('formResponsable').value;
+          item['Mail'] = document.getElementById('formMail').value;
+          item['Direccion'] = document.getElementById('formDireccion').value;
+          item['Marca'] = document.getElementById('formMarca').value;
+          item['Model'] = document.getElementById('formModelo').value;
+          item['Numero de Serie'] = document.getElementById('formSerie').value;
+          item['RAM'] = document.getElementById('formRAM').value;
+          item['CPU'] = document.getElementById('formCPU').value;
+          item['Tier Actual'] = document.getElementById('formTier').value;
+          item['Años de Vida Remanente'] = document.getElementById('formVida').value;
+        }
+      }
+
+      applyFilters();
       closeModal();
+      alert('¡Campos actualizados localmente en la vista!');
     }
 
     function exportCSV() {
