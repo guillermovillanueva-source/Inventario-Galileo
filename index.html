@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Portal ITAM - Galileo Dark</title>
+  <title>Inventario Galileo - Rocker Admin</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -14,131 +14,204 @@
 
   <style>
     body {
-      background-color: #121319;
-      color: #e2e8f0;
+      background-color: #0f1115;
+      color: #9ea4b0;
     }
-    .bg-card {
-      background-color: #1a1c23;
+    .bg-panel {
+      background-color: #171a1f;
     }
-    .bg-card-hover:hover {
-      background-color: #222530;
+    .bg-panel-hover:hover {
+      background-color: #1f232b;
     }
-    .border-custom {
-      border-color: #2a2d3d;
+    .border-rocker {
+      border-color: #242830;
     }
     /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #121319;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #2a2d3d;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #6d28d9;
-    }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #0f1115; }
+    ::-webkit-scrollbar-thumb { background: #2b303c; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
   </style>
 </head>
-<body class="font-sans antialiased flex h-screen overflow-hidden">
+<body class="font-sans antialiased flex h-screen overflow-hidden text-xs">
 
-  <!-- Sidebar Lateral Púrpura -->
-  <aside class="w-16 sm:w-20 bg-violet-700 flex flex-col justify-between items-center py-6 shadow-2xl z-40 shrink-0">
-    <div class="flex flex-col items-center gap-8 w-full">
-      <!-- Logo -->
-      <div class="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center text-white text-xl font-black backdrop-blur-md">
-        G
+  <!-- Sidebar Lateral Estilo Rocker -->
+  <aside class="w-60 bg-[#171a1f] border-r border-rocker flex flex-col justify-between shrink-0 z-40 hidden md:flex">
+    <div>
+      <!-- Brand Header -->
+      <div class="h-14 px-6 border-b border-rocker flex items-center justify-between">
+        <div class="flex items-center gap-2 font-bold text-white text-base">
+          <span class="text-blue-500">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          </span>
+          Rocker <span class="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded uppercase tracking-wider font-mono">ITAM</span>
+        </div>
       </div>
 
-      <!-- Menú Navegación -->
-      <nav class="flex flex-col gap-6 items-center w-full">
-        <button class="p-3 bg-white/10 text-white rounded-xl shadow-lg transition hover:bg-white/20" title="Dashboard">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-        </button>
+      <!-- Navigation Links -->
+      <nav class="p-4 space-y-1">
+        <div class="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dashboard</div>
+        
+        <a href="#" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/20 font-medium">
+          <div class="flex items-center gap-3">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            <span>Alternate View</span>
+          </div>
+        </a>
 
-        <button onclick="openModal()" class="p-3 text-violet-200 hover:text-white rounded-xl hover:bg-white/10 transition" title="Agregar Nuevo Equipo">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        <div class="pt-4 px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Acciones Directas</div>
+
+        <button onclick="openModal()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          <span>Nuevo Equipo</span>
         </button>
       </nav>
     </div>
 
-    <!-- User / Status -->
-    <div class="w-3 h-3 bg-emerald-400 rounded-full shadow-[0_0_10px_#10b981]" title="Conectado a Google Sheets"></div>
+    <!-- Footer Sidebar -->
+    <div class="p-4 border-t border-rocker text-[10px] text-slate-600">
+      Galileo ITAM © 2026
+    </div>
   </aside>
 
-  <!-- Contenido Principal -->
+  <!-- Contenido Central -->
   <div class="flex-1 flex flex-col h-full overflow-y-auto">
 
-    <!-- Navbar Top -->
-    <header class="p-6 border-b border-custom flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-          Inventario Galileo <span class="text-xs bg-violet-500/20 text-violet-300 border border-violet-500/30 px-2.5 py-0.5 rounded-full font-normal">ITAM Ben & Frank</span>
-        </h1>
-        <p class="text-xs text-slate-400 mt-1">Gestión integral de activos de cómputo y monitoreo de perfilamiento</p>
+    <!-- Topbar Header -->
+    <header class="h-14 bg-[#171a1f] border-b border-rocker px-6 flex items-center justify-between shrink-0 sticky top-0 z-30">
+      <div class="flex items-center gap-4 flex-1 max-w-md">
+        <div class="relative w-full">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          </span>
+          <input type="text" id="searchInput" placeholder="Search activos, serie, usuario..." class="w-full bg-[#0f1115] text-slate-200 pl-9 pr-4 py-1.5 rounded-lg border border-rocker focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
+        </div>
       </div>
 
-      <button onclick="openModal()" class="bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-[0_0_20px_rgba(109,40,217,0.4)] flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-        Nuevo Equipo
-      </button>
+      <!-- User Info -->
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-rose-500 to-amber-400 flex items-center justify-center text-white font-bold text-xs shadow-md">
+            GV
+          </div>
+          <div class="hidden sm:block text-left">
+            <p class="text-white font-bold leading-none text-xs">Guillermo V.</p>
+            <p class="text-[10px] text-slate-500">Service Desk Lead</p>
+          </div>
+        </div>
+      </div>
     </header>
 
-    <!-- Dashboard Body -->
-    <main class="p-6 space-y-6 max-w-7xl w-full mx-auto">
+    <!-- Main Dashboard Area -->
+    <main class="p-6 space-y-6 max-w-[1600px] w-full mx-auto">
 
-      <!-- KPIs Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-card p-5 rounded-2xl border border-custom shadow-lg">
-          <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Equipos</p>
-          <div class="flex items-baseline justify-between mt-2">
-            <p id="kpi-total" class="text-3xl font-black text-white">--</p>
-            <span class="text-xs text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded-md font-mono">Activos</span>
+      <!-- Fila 1: Charts Principales estilo Rocker -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Gráfico 1: Antigüedad de Vida Remanente (Area Smooth Chart) -->
+        <div class="lg:col-span-2 bg-panel p-5 rounded-xl border border-rocker shadow-xl">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-sm font-bold text-white">Antigüedad y Curva de Vida Remanente</h2>
+            <span class="text-[10px] text-blue-400 font-mono bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">Años Restantes</span>
+          </div>
+          <div class="h-64">
+            <canvas id="chartAntiguedad"></canvas>
           </div>
         </div>
 
-        <div class="bg-card p-5 rounded-2xl border border-custom shadow-lg">
-          <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">En Riesgo (&lt;1 Año)</p>
-          <div class="flex items-baseline justify-between mt-2">
-            <p id="kpi-riesgo" class="text-3xl font-black text-amber-400">--</p>
-            <span class="text-xs text-amber-400/20 bg-amber-500/10 px-2 py-0.5 rounded-md font-mono">Renovación</span>
+        <!-- Gráfico 2: Diagnóstico Status Bar Verticals -->
+        <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl flex flex-col justify-between">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-sm font-bold text-white">Diagnóstico de Activos</h2>
+            <span class="text-slate-500">•••</span>
+          </div>
+          <div class="h-64">
+            <canvas id="chartDiagnosticoBars"></canvas>
           </div>
         </div>
 
-        <div class="bg-card p-5 rounded-2xl border border-custom shadow-lg">
-          <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Sobre-especificados</p>
-          <div class="flex items-baseline justify-between mt-2">
-            <p id="kpi-sobre" class="text-3xl font-black text-indigo-400">--</p>
-            <span class="text-xs text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md font-mono">Optimizable</span>
-          </div>
-        </div>
-
-        <div class="bg-card p-5 rounded-2xl border border-custom shadow-lg">
-          <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Sub-especificados</p>
-          <div class="flex items-baseline justify-between mt-2">
-            <p id="kpi-sub" class="text-3xl font-black text-rose-400">--</p>
-            <span class="text-xs text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-md font-mono">Receptores</span>
-          </div>
-        </div>
       </div>
 
-      <!-- Barra de Filtros -->
-      <div class="bg-card p-4 rounded-2xl border border-custom shadow-lg space-y-3">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <input type="text" id="searchInput" placeholder="🔍 Buscar responsable, serie o modelo..." class="w-full bg-[#121319] border border-custom text-xs text-slate-200 px-3.5 py-2.5 rounded-xl focus:ring-1 focus:ring-violet-500 focus:outline-none placeholder-slate-500" />
+      <!-- Fila 2: Donut Chart + Mini KPI Cards Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Donut Chart Modelos -->
+        <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl flex flex-col justify-between">
+          <div class="flex justify-between items-center mb-2">
+            <h2 class="text-sm font-bold text-white">Distribución por Fabricante</h2>
+          </div>
+          <div class="h-56 relative flex items-center justify-center">
+            <canvas id="chartModelos"></canvas>
+            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span id="donutCenterTotal" class="text-2xl font-black text-white">--</span>
+              <span class="text-[10px] text-slate-500 uppercase tracking-widest">Equipos</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Mini KPI Cards Estilo Rocker -->
+        <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
           
-          <select id="filterArea" class="w-full bg-[#121319] border border-custom text-xs text-slate-200 px-3.5 py-2.5 rounded-xl focus:ring-1 focus:ring-violet-500 focus:outline-none">
-            <option value="">Todas las Áreas</option>
+          <div class="bg-panel p-4 rounded-xl border border-rocker shadow-xl flex justify-between items-center">
+            <div>
+              <p class="text-[11px] text-slate-400 font-medium">Total Registrados</p>
+              <p id="kpi-total" class="text-2xl font-black text-white mt-1">--</p>
+              <span class="text-[10px] text-emerald-400 font-bold">+100% Sincronizado</span>
+            </div>
+            <div class="p-3 bg-blue-500/10 text-blue-400 rounded-lg">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+          </div>
+
+          <div class="bg-panel p-4 rounded-xl border border-rocker shadow-xl flex justify-between items-center">
+            <div>
+              <p class="text-[11px] text-slate-400 font-medium">Equipos en Riesgo (&lt;1A)</p>
+              <p id="kpi-riesgo" class="text-2xl font-black text-amber-400 mt-1">--</p>
+              <span class="text-[10px] text-amber-400 font-bold">Atención prioritaria</span>
+            </div>
+            <div class="p-3 bg-amber-500/10 text-amber-400 rounded-lg">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+          </div>
+
+          <div class="bg-panel p-4 rounded-xl border border-rocker shadow-xl flex justify-between items-center">
+            <div>
+              <p class="text-[11px] text-slate-400 font-medium">Sobre-especificados</p>
+              <p id="kpi-sobre" class="text-2xl font-black text-indigo-400 mt-1">--</p>
+              <span class="text-[10px] text-indigo-400 font-bold">Capacidad sobrante</span>
+            </div>
+            <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-lg">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+            </div>
+          </div>
+
+          <div class="bg-panel p-4 rounded-xl border border-rocker shadow-xl flex justify-between items-center">
+            <div>
+              <p class="text-[11px] text-slate-400 font-medium">Sub-especificados</p>
+              <p id="kpi-sub" class="text-2xl font-black text-rose-500 mt-1">--</p>
+              <span class="text-[10px] text-rose-500 font-bold">Candidatos a upgrade</span>
+            </div>
+            <div class="p-3 bg-rose-500/10 text-rose-500 rounded-lg">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Filtros Multicriterio -->
+      <div class="bg-panel p-4 rounded-xl border border-rocker shadow-xl space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <select id="filterArea" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs">
+            <option value="">Todas las Áreas / Direcciones</option>
           </select>
 
-          <select id="filterMarca" class="w-full bg-[#121319] border border-custom text-xs text-slate-200 px-3.5 py-2.5 rounded-xl focus:ring-1 focus:ring-violet-500 focus:outline-none">
+          <select id="filterMarca" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs">
             <option value="">Todas las Marcas</option>
           </select>
 
-          <select id="filterDiagnostico" class="w-full bg-[#121319] border border-custom text-xs text-slate-200 px-3.5 py-2.5 rounded-xl focus:ring-1 focus:ring-violet-500 focus:outline-none">
+          <select id="filterDiagnostico" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs">
             <option value="">Todos los Diagnósticos</option>
             <option value="Correcto">Correcto</option>
             <option value="Sobre">Sobre-especificado</option>
@@ -147,48 +220,42 @@
         </div>
       </div>
 
-      <!-- Gráficos -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-card p-5 rounded-2xl border border-custom shadow-lg">
-          <h2 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4">Distribución por Modelos</h2>
-          <div class="h-56"><canvas id="chartModelos"></canvas></div>
+      <!-- Tabla de Activos Estilo Rocker -->
+      <div class="bg-panel rounded-xl border border-rocker shadow-xl overflow-hidden">
+        <div class="p-4 border-b border-rocker flex justify-between items-center">
+          <h2 class="text-sm font-bold text-white">Listado Completo de Activos</h2>
+          <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-3 py-1.5 rounded-lg text-xs transition">
+            + Nuevo Equipo
+          </button>
         </div>
 
-        <div class="bg-card p-5 rounded-2xl border border-custom shadow-lg">
-          <h2 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4">Vida Remanente (Años)</h2>
-          <div class="h-56"><canvas id="chartAntiguedad"></canvas></div>
-        </div>
-      </div>
-
-      <!-- Tabla Estilizada -->
-      <div class="bg-card rounded-2xl border border-custom shadow-lg overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-300">
-            <thead class="bg-[#121319] text-slate-400 uppercase tracking-wider border-b border-custom">
+            <thead class="bg-[#0f1115] text-slate-400 uppercase tracking-wider border-b border-rocker text-[10px]">
               <tr>
-                <th class="p-4">Responsable</th>
-                <th class="p-4">Área</th>
-                <th class="p-4">Modelo</th>
-                <th class="p-4">Serie</th>
-                <th class="p-4">RAM / CPU</th>
-                <th class="p-4 text-center">Vida Rem.</th>
-                <th class="p-4 text-center">Diagnóstico</th>
-                <th class="p-4 text-center">Acciones</th>
+                <th class="p-3">Responsable</th>
+                <th class="p-3">Área</th>
+                <th class="p-3">Modelo</th>
+                <th class="p-3">Número de Serie</th>
+                <th class="p-3">RAM / CPU</th>
+                <th class="p-3 text-center">Vida Rem.</th>
+                <th class="p-3 text-center">Diagnóstico</th>
+                <th class="p-3 text-center">Acción</th>
               </tr>
             </thead>
-            <tbody id="inventoryTable" class="divide-y divide-custom">
+            <tbody id="inventoryTable" class="divide-y divide-rocker">
               <tr><td colspan="8" class="text-center p-8 text-slate-500">Cargando datos desde Google Sheets...</td></tr>
             </tbody>
           </table>
         </div>
 
         <!-- Paginador -->
-        <div class="p-4 bg-[#121319]/50 border-t border-custom flex flex-col sm:flex-row justify-between items-center gap-3">
-          <p class="text-xs text-slate-400" id="paginationInfo">Mostrando 0 de 0 activos</p>
+        <div class="p-3 bg-[#0f1115]/50 border-t border-rocker flex flex-col sm:flex-row justify-between items-center gap-3 text-xs">
+          <p class="text-slate-500" id="paginationInfo">Mostrando 0 de 0 activos</p>
           <div class="flex items-center gap-2">
-            <button id="btnPrev" onclick="prevPage()" class="px-3 py-1.5 bg-card hover:bg-[#222530] border border-custom rounded-lg text-xs font-semibold text-slate-300 disabled:opacity-30">Anterior</button>
-            <span id="pageIndicator" class="text-xs font-bold px-2 text-violet-400">1</span>
-            <button id="btnNext" onclick="nextPage()" class="px-3 py-1.5 bg-card hover:bg-[#222530] border border-custom rounded-lg text-xs font-semibold text-slate-300 disabled:opacity-30">Siguiente</button>
+            <button id="btnPrev" onclick="prevPage()" class="px-3 py-1 bg-panel hover:bg-panel-hover border border-rocker rounded text-slate-300 disabled:opacity-30">Anterior</button>
+            <span id="pageIndicator" class="font-bold px-2 text-blue-400">1</span>
+            <button id="btnNext" onclick="nextPage()" class="px-3 py-1 bg-panel hover:bg-panel-hover border border-rocker rounded text-slate-300 disabled:opacity-30">Siguiente</button>
           </div>
         </div>
       </div>
@@ -197,11 +264,11 @@
   </div>
 
   <!-- Modal para Altas / Edición -->
-  <div id="assetModal" class="fixed inset-0 bg-black/70 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
-    <div class="bg-card border border-custom rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col">
-      <div class="p-5 border-b border-custom flex justify-between items-center">
-        <h3 id="modalTitle" class="font-bold text-base text-white">Registrar Equipo</h3>
-        <button onclick="closeModal()" class="text-slate-400 hover:text-white">✕</button>
+  <div id="assetModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-panel border border-rocker rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col">
+      <div class="p-4 border-b border-rocker flex justify-between items-center bg-[#0f1115]">
+        <h3 id="modalTitle" class="font-bold text-sm text-white">Registrar Equipo</h3>
+        <button onclick="closeModal()" class="text-slate-500 hover:text-white">✕</button>
       </div>
 
       <form id="assetForm" onsubmit="saveAsset(event)" class="p-6 space-y-4 text-xs">
@@ -210,44 +277,44 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-slate-400 mb-1">Correo Colaborador</label>
-            <input type="email" id="formMail" required class="w-full bg-[#121319] border border-custom text-slate-200 px-3 py-2 rounded-xl focus:ring-1 focus:ring-violet-500 focus:outline-none" placeholder="correo@benandfrank.com">
+            <input type="email" id="formMail" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="correo@benandfrank.com">
           </div>
           <div>
             <label class="block text-slate-400 mb-1">Responsable</label>
-            <input type="text" id="formResponsable" required class="w-full bg-[#121319] border border-custom text-slate-200 px-3 py-2 rounded-xl focus:ring-1 focus:ring-violet-500 focus:outline-none" placeholder="Apellido, Nombre">
+            <input type="text" id="formResponsable" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Apellido, Nombre">
           </div>
           <div>
             <label class="block text-slate-400 mb-1">Dirección / Área</label>
-            <input type="text" id="formDireccion" class="w-full bg-[#121319] border border-custom text-slate-200 px-3 py-2 rounded-xl focus:ring-1 focus:ring-violet-500 focus:outline-none" placeholder="Tech, Marketing...">
+            <input type="text" id="formDireccion" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Tech, Marketing...">
           </div>
           <div>
             <label class="block text-slate-400 mb-1">Marca</label>
-            <select id="formMarca" class="w-full bg-[#121319] border border-custom text-slate-200 px-3 py-2 rounded-xl focus:ring-1 focus:ring-violet-500 focus:outline-none">
+            <select id="formMarca" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500">
               <option value="Lenovo">Lenovo</option>
               <option value="Apple">Apple</option>
             </select>
           </div>
           <div>
             <label class="block text-slate-400 mb-1">Modelo / Tipo</label>
-            <input type="text" id="formModelo" required class="w-full bg-[#121319] border border-custom text-slate-200 px-3 py-2 rounded-xl focus:ring-1 focus:ring-violet-500 focus:outline-none" placeholder="ThinkPad E14, MacBook Pro...">
+            <input type="text" id="formModelo" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="ThinkPad E14, MacBook Pro...">
           </div>
           <div>
             <label class="block text-slate-400 mb-1">Número de Serie</label>
-            <input type="text" id="formSerie" required class="w-full bg-[#121319] border border-custom text-slate-200 px-3 py-2 rounded-xl focus:ring-1 focus:ring-violet-500 focus:outline-none" placeholder="PF489XM1">
+            <input type="text" id="formSerie" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="PF489XM1">
           </div>
           <div>
             <label class="block text-slate-400 mb-1">RAM</label>
-            <input type="text" id="formRAM" class="w-full bg-[#121319] border border-custom text-slate-200 px-3 py-2 rounded-xl focus:ring-1 focus:ring-violet-500 focus:outline-none" placeholder="16 GB">
+            <input type="text" id="formRAM" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="16 GB">
           </div>
           <div>
             <label class="block text-slate-400 mb-1">CPU / Procesador</label>
-            <input type="text" id="formCPU" class="w-full bg-[#121319] border border-custom text-slate-200 px-3 py-2 rounded-xl focus:ring-1 focus:ring-violet-500 focus:outline-none" placeholder="Apple M1, Ryzen 7...">
+            <input type="text" id="formCPU" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Apple M1, Ryzen 7...">
           </div>
         </div>
 
-        <div class="pt-4 border-t border-custom flex justify-end gap-3">
-          <button type="button" onclick="closeModal()" class="px-4 py-2 border border-custom rounded-xl text-slate-400 hover:text-white">Cancelar</button>
-          <button type="submit" id="btnSave" class="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-xl transition">Guardar Cambios</button>
+        <div class="pt-4 border-t border-rocker flex justify-end gap-3">
+          <button type="button" onclick="closeModal()" class="px-4 py-2 border border-rocker rounded-lg text-slate-400 hover:text-white">Cancelar</button>
+          <button type="submit" id="btnSave" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition">Guardar Cambios</button>
         </div>
       </form>
     </div>
@@ -255,15 +322,15 @@
 
   <script>
     const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6O7VuFl6hhj6TzvCYlHF5mVq6qQz49oTsFurFP7yINJzTjNddurEHG_GQCVsy4cqEO8ntD_m1WYi-/pub?gid=1154664784&single=true&output=csv';
-    const APPS_SCRIPT_URL = 'AQUI_TU_WEB_APP_URL';
 
     let globalData = [];
     let filteredData = [];
     let currentPage = 1;
     const pageSize = 10;
 
-    let chartModelosObj = null;
     let chartAntiguedadObj = null;
+    let chartDiagnosticoObj = null;
+    let chartModelosObj = null;
 
     window.addEventListener('DOMContentLoaded', fetchData);
 
@@ -299,7 +366,7 @@
       const marcas = [...new Set(data.map(d => d['Marca']).filter(Boolean))].sort();
 
       const selArea = document.getElementById('filterArea');
-      selArea.innerHTML = '<option value="">Todas las Áreas</option>';
+      selArea.innerHTML = '<option value="">Todas las Áreas / Direcciones</option>';
       areas.forEach(a => selArea.innerHTML += `<option value="${a}">${a}</option>`);
 
       const selMarca = document.getElementById('filterMarca');
@@ -339,54 +406,40 @@
 
     function renderDashboard(data) {
       document.getElementById('kpi-total').innerText = data.length;
+      document.getElementById('donutCenterTotal').innerText = data.length;
       document.getElementById('kpi-riesgo').innerText = data.filter(d => parseInt(d['Años de Vida Remanente']) <= 1).length;
       document.getElementById('kpi-sobre').innerText = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sobre')).length;
       document.getElementById('kpi-sub').innerText = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sub')).length;
 
-      // Chart Modelos
-      const modelosCount = {};
-      data.forEach(d => {
-        const mod = `${d['Marca'] || ''} ${d['Model'] || d['Tipo'] || ''}`.trim() || 'Sin definir';
-        modelosCount[mod] = (modelosCount[mod] || 0) + 1;
-      });
-
-      if (chartModelosObj) chartModelosObj.destroy();
-      chartModelosObj = new Chart(document.getElementById('chartModelos'), {
-        type: 'doughnut',
-        data: {
-          labels: Object.keys(modelosCount).slice(0, 6),
-          datasets: [{
-            data: Object.values(modelosCount).slice(0, 6),
-            backgroundColor: ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#64748b'],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } }
-        }
-      });
-
-      // Chart Antigüedad
+      // Chart 1: Antigüedad Smooth Curve (Estilo Rocker)
       const vidaCount = {};
       data.forEach(d => {
         const yrs = d['Años de Vida Remanente'] !== undefined && d['Años de Vida Remanente'] !== '' 
-          ? `${d['Años de Vida Remanente']} A` 
+          ? `${d['Años de Vida Remanente']} Año(s)` 
           : 'N/D';
         vidaCount[yrs] = (vidaCount[yrs] || 0) + 1;
       });
 
+      const ctx1 = document.getElementById('chartAntiguedad').getContext('2d');
+      const gradient1 = ctx1.createLinearGradient(0, 0, 0, 200);
+      gradient1.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
+      gradient1.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+
       if (chartAntiguedadObj) chartAntiguedadObj.destroy();
-      chartAntiguedadObj = new Chart(document.getElementById('chartAntiguedad'), {
-        type: 'bar',
+      chartAntiguedadObj = new Chart(ctx1, {
+        type: 'line',
         data: {
           labels: Object.keys(vidaCount),
           datasets: [{
             label: 'Equipos',
             data: Object.values(vidaCount),
-            backgroundColor: '#7c3aed',
-            borderRadius: 6
+            borderColor: '#3b82f6',
+            borderWidth: 3,
+            backgroundColor: gradient1,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: '#3b82f6'
           }]
         },
         options: {
@@ -394,9 +447,64 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
-            y: { ticks: { color: '#94a3b8' }, grid: { color: '#2a2d3d' } }
+            x: { ticks: { color: '#64748b' }, grid: { display: false } },
+            y: { ticks: { color: '#64748b' }, grid: { color: '#242830' } }
           }
+        }
+      });
+
+      // Chart 2: Vertical Status Bars
+      const correctos = data.filter(d => !(d['Actual vs Esperado'] || '').toLowerCase().includes('sobre') && !(d['Actual vs Esperado'] || '').toLowerCase().includes('sub')).length;
+      const sobre = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sobre')).length;
+      const sub = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sub')).length;
+
+      if (chartDiagnosticoObj) chartDiagnosticoObj.destroy();
+      chartDiagnosticoObj = new Chart(document.getElementById('chartDiagnosticoBars'), {
+        type: 'bar',
+        data: {
+          labels: ['Correcto', 'Sobre-esp.', 'Sub-esp.'],
+          datasets: [{
+            data: [correctos, sobre, sub],
+            backgroundColor: ['#10b981', '#6366f1', '#f43f5e'],
+            borderRadius: 8,
+            barThickness: 24
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#64748b' }, grid: { display: false } },
+            y: { ticks: { color: '#64748b' }, grid: { color: '#242830' } }
+          }
+        }
+      });
+
+      // Chart 3: Donut Modelos
+      const marcasCount = {};
+      data.forEach(d => {
+        const marca = d['Marca'] || 'Otra';
+        marcasCount[marca] = (marcasCount[marca] || 0) + 1;
+      });
+
+      if (chartModelosObj) chartModelosObj.destroy();
+      chartModelosObj = new Chart(document.getElementById('chartModelos'), {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(marcasCount),
+          datasets: [{
+            data: Object.values(marcasCount),
+            backgroundColor: ['#10b981', '#00e5ff', '#ff0055', '#a855f7'],
+            borderWidth: 0,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '75%',
+          plugins: { legend: { position: 'bottom', labels: { color: '#9ea4b0', font: { size: 10 } } } }
         }
       });
     }
@@ -409,42 +517,32 @@
       const pageItems = filteredData.slice(start, start + pageSize);
 
       if (pageItems.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center p-8 text-slate-500">Sin coincidencias encontradas</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center p-8 text-slate-600">Sin coincidencias encontradas</td></tr>';
       } else {
         pageItems.forEach((row) => {
           const diag = row['Actual vs Esperado'] || 'Correcto';
           const isSub = diag.toLowerCase().includes('sub');
           const isSobre = diag.toLowerCase().includes('sobre');
 
-          const vidaRem = parseInt(row['Años de Vida Remanente']) || 0;
-          const pct = Math.min(Math.max((vidaRem / 5) * 100, 10), 100);
-
           const tr = document.createElement('tr');
-          tr.className = "bg-card-hover transition-colors";
+          tr.className = "bg-panel-hover transition-colors";
           tr.innerHTML = `
-            <td class="p-4 font-semibold text-white">${row['Responsable del activo'] || row['Mail'] || 'N/A'}</td>
-            <td class="p-4 text-slate-400">${row['Direccion'] || 'N/A'}</td>
-            <td class="p-4 font-medium text-slate-200">${row['Marca'] || ''} ${row['Model'] || row['Tipo'] || ''}</td>
-            <td class="p-4 font-mono text-slate-400 text-[11px]">${row['Numero de Serie'] || 'N/A'}</td>
-            <td class="p-4 text-slate-400 text-[11px]">${row['RAM'] || ''} / ${row['CPU'] || ''}</td>
-            <td class="p-4 text-center">
-              <div class="flex items-center gap-2 justify-center">
-                <span class="font-bold text-white w-4">${row['Años de Vida Remanente'] ?? '0'}</span>
-                <div class="w-12 bg-[#121319] h-1.5 rounded-full overflow-hidden border border-custom">
-                  <div class="h-full bg-violet-500" style="width: ${pct}%"></div>
-                </div>
-              </div>
-            </td>
-            <td class="p-4 text-center">
-              <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider uppercase border ${
-                isSub ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
-                isSobre ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+            <td class="p-3 font-semibold text-white">${row['Responsable del activo'] || row['Mail'] || 'N/A'}</td>
+            <td class="p-3 text-slate-400">${row['Direccion'] || 'N/A'}</td>
+            <td class="p-3 font-medium text-slate-200">${row['Marca'] || ''} ${row['Model'] || row['Tipo'] || ''}</td>
+            <td class="p-3 font-mono text-slate-400 text-[11px]">${row['Numero de Serie'] || 'N/A'}</td>
+            <td class="p-3 text-slate-400 text-[11px]">${row['RAM'] || ''} / ${row['CPU'] || ''}</td>
+            <td class="p-3 text-center font-bold text-white">${row['Años de Vida Remanente'] ?? 'N/D'}</td>
+            <td class="p-3 text-center">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                isSub ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                isSobre ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
               }">
                 ${diag}
               </span>
             </td>
-            <td class="p-4 text-center">
-              <button onclick="editAsset(${row._rowIndex})" class="text-violet-400 hover:text-white border border-violet-500/30 px-3 py-1 rounded-lg hover:bg-violet-600/30 transition text-[11px]">
+            <td class="p-3 text-center">
+              <button onclick="editAsset(${row._rowIndex})" class="text-blue-400 hover:text-white border border-blue-500/30 px-2 py-0.5 rounded hover:bg-blue-600/20 transition text-[10px]">
                 Editar
               </button>
             </td>
@@ -477,7 +575,7 @@
         document.getElementById('formRAM').value = item['RAM'] || '';
         document.getElementById('formCPU').value = item['CPU'] || '';
       } else {
-        document.getElementById('modalTitle').innerText = 'Registrar Nuevo Equipo';
+        document.getElementById('modalTitle').innerText = 'Registrar Equipo';
         document.getElementById('assetForm').reset();
         document.getElementById('editRowIndex').value = '';
       }
@@ -494,7 +592,7 @@
 
     function saveAsset(e) {
       e.preventDefault();
-      alert('⚠️ Recuerda que para guardar cambios en tiempo real debemos conectar la WebApp de Google Apps Script.');
+      alert('⚠️ Para guardar cambios en tiempo real en Google Sheets requerimos habilitar Google Apps Script.');
       closeModal();
     }
   </script>
