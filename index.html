@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Inventario Galileo - Rocker Admin</title>
+  <title>Inventario Galileo - Service Desk Admin</title>
 
   <!-- Favicon Dinámico Isotipo "IG" -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23171a1f'/><circle cx='50' cy='50' r='42' fill='none' stroke='%233b82f6' stroke-width='4'/><text x='30' y='68' font-family='Arial, sans-serif' font-weight='900' font-size='50' fill='%233b82f6'>I</text><text x='48' y='68' font-family='Arial, sans-serif' font-weight='900' font-size='50' fill='%23ffffff'>G</text></svg>" />
@@ -76,15 +76,18 @@
     </div>
   </div>
 
-  <!-- Sidebar Lateral Estilo Rocker -->
+  <!-- Sidebar Lateral -->
   <aside class="w-64 bg-[#171a1f] border-r border-rocker flex flex-col justify-between shrink-0 z-40 hidden md:flex">
     <div>
       <div class="h-14 px-6 border-b border-rocker flex items-center justify-between">
-        <div class="flex items-center gap-2.5 font-bold text-white text-base">
-          <div class="w-8 h-8 bg-[#0f1115] border border-blue-500/50 rounded-xl flex items-center justify-center font-black text-sm tracking-tighter">
+        <div class="flex items-center gap-2.5 font-bold text-white text-sm">
+          <div class="w-8 h-8 bg-[#0f1115] border border-blue-500/50 rounded-xl flex items-center justify-center font-black text-sm tracking-tighter shrink-0">
             <span class="text-blue-500">I</span><span class="text-white">G</span>
           </div>
-          Rocker <span class="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded uppercase tracking-wider font-mono">ITAM</span>
+          <div class="flex flex-col leading-tight">
+            <span>Service Desk Galileo</span>
+            <span class="text-[9px] text-blue-400 font-mono tracking-wider font-semibold uppercase">ITAM</span>
+          </div>
         </div>
       </div>
 
@@ -385,13 +388,13 @@
       }).filter(item => item['Mail'] || item['Responsable del activo'] || item['Numero de Serie']);
     }
 
-    // Normalizador Exclusivo Tiendas (Tienda, Producto, Marca, Modelo)
     function parseTiendasData(rawRows) {
       let headerIndex = rawRows.findIndex(row => row.some(cell => 
         String(cell).toLowerCase().includes('tienda') || 
         String(cell).toLowerCase().includes('producto') || 
         String(cell).toLowerCase().includes('marca') ||
-        String(cell).toLowerCase().includes('modelo')
+        String(cell).toLowerCase().includes('modelo') ||
+        String(cell).toLowerCase().includes('serie')
       ));
 
       if (headerIndex === -1) headerIndex = 0;
@@ -405,18 +408,19 @@
           rawObj[h] = row[i] ? String(row[i]).trim() : '';
         });
 
-        // Mapeo 4 Encabezados Tienda
         const tienda = rawObj['Tienda'] || rawObj['Sucursal'] || rawObj['Ubicacion'] || 'Tienda Sin Nombre';
         const producto = rawObj['Producto'] || rawObj['Equipo'] || rawObj['Tipo'] || 'Dispositivo Retail';
         const marca = rawObj['Marca'] || (String(rawObj['Modelo'] || '').toLowerCase().includes('mac') ? 'Apple' : 'Lenovo');
         const modelo = rawObj['Modelo'] || rawObj['Dispositivo'] || 'Estándar';
+        const serie = rawObj['Numero de Serie'] || rawObj['Número de Serie'] || rawObj['Serie'] || rawObj['Serial'] || rawObj['S/N'] || 'N/A';
 
         return {
           _rowIndex: idx,
           'Tienda': tienda,
           'Producto': producto,
           'Marca': marca,
-          'Modelo': modelo
+          'Modelo': modelo,
+          'Numero de Serie': serie
         };
       }).filter(item => item['Tienda'] && item['Tienda'] !== 'Tienda Sin Nombre');
     }
@@ -464,7 +468,7 @@
             <th class="p-3">Correo</th>
             <th class="p-3">Área / Dirección</th>
             <th class="p-3">Modelo</th>
-            <th class="p-3">Serie</th>
+            <th class="p-3">Número de Serie</th>
             <th class="p-3">RAM / CPU</th>
             <th class="p-3 text-center">Tier Actual</th>
             <th class="p-3 text-center">Vida Rem.</th>
@@ -479,6 +483,7 @@
             <th class="p-3 font-bold text-purple-400">Producto</th>
             <th class="p-3 font-bold text-emerald-400">Marca</th>
             <th class="p-3 font-bold text-slate-200">Modelo</th>
+            <th class="p-3 font-bold text-amber-400">Número de Serie</th>
             <th class="p-3 text-center">Acción</th>
           </tr>
         `;
@@ -588,8 +593,9 @@
           const itemProducto = (d['Producto'] || '').trim();
           const itemMarca = (d['Marca'] || '').trim();
           const itemModelo = (d['Modelo'] || '').toLowerCase();
+          const itemSerie = (d['Numero de Serie'] || '').toLowerCase();
 
-          const matchesGlobal = !searchGlobal || itemTienda.toLowerCase().includes(searchGlobal) || itemProducto.toLowerCase().includes(searchGlobal) || itemModelo.includes(searchGlobal);
+          const matchesGlobal = !searchGlobal || itemTienda.toLowerCase().includes(searchGlobal) || itemProducto.toLowerCase().includes(searchGlobal) || itemModelo.includes(searchGlobal) || itemSerie.includes(searchGlobal);
           const matchesTienda = !tienda || itemTienda === tienda;
           const matchesProducto = !producto || itemProducto === producto;
           const matchesMarca = !marca || itemMarca === marca;
@@ -717,7 +723,6 @@
           renderModeloHQCharts(data);
         }
       } else {
-        // DASHBOARD EXCLUSIVO TIENDAS (Tienda, Producto, Marca, Modelo)
         container.innerHTML = `
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
@@ -800,7 +805,6 @@
       });
     }
 
-    // Gráficos Exclusivos Tiendas
     function renderTiendasCharts(data) {
       const tiendaCount = {};
       data.forEach(d => { const t = (d['Tienda'] || 'N/D').trim(); tiendaCount[t] = (tiendaCount[t] || 0) + 1; });
@@ -829,7 +833,7 @@
       const pageItems = filteredData.slice(start, start + pageSize);
 
       if (pageItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${currentDataset === 'HQ' ? 10 : 5}" class="text-center p-8 text-slate-600">Sin coincidencias encontradas</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${currentDataset === 'HQ' ? 10 : 6}" class="text-center p-8 text-slate-600">Sin coincidencias encontradas</td></tr>`;
       } else {
         pageItems.forEach((row) => {
           const actionBtn = isAdmin
@@ -865,12 +869,12 @@
               <td class="p-3 text-center">${actionBtn}</td>
             `;
           } else {
-            // TABLA TIENDAS (Tienda, Producto, Marca, Modelo)
             tr.innerHTML = `
               <td class="p-3 font-bold text-blue-400">${row['Tienda'] || 'N/A'}</td>
               <td class="p-3 font-semibold text-purple-300">${row['Producto'] || 'N/A'}</td>
               <td class="p-3 text-emerald-400 font-medium">${row['Marca'] || 'N/A'}</td>
               <td class="p-3 font-mono text-slate-200 text-[11px]">${row['Modelo'] || 'N/A'}</td>
+              <td class="p-3 font-mono text-amber-400 text-[11px]">${row['Numero de Serie'] || 'N/A'}</td>
               <td class="p-3 text-center">${actionBtn}</td>
             `;
           }
@@ -922,12 +926,12 @@
           document.getElementById('formVida').value = item['Años de Vida Remanente'] || '0';
         }
       } else {
-        // FORMULARIO EXCLUSIVO TIENDAS (Tienda, Producto, Marca, Modelo)
         formContainer.innerHTML = `
           <div><label class="block text-slate-400 mb-1 font-bold text-blue-400">Tienda / Sucursal</label><input type="text" id="formTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Tienda Roma"></div>
           <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Producto</label><input type="text" id="formProducto" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad, Impresora, PC POS"></div>
           <div><label class="block text-slate-400 mb-1 font-bold text-emerald-400">Marca</label><input type="text" id="formMarcaTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Apple, Lenovo, Zebra"></div>
           <div><label class="block text-slate-400 mb-1 font-bold text-slate-200">Modelo</label><input type="text" id="formModeloTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad 9th Gen"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-amber-400">Número de Serie</label><input type="text" id="formSerieTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: DLX12345678"></div>
         `;
 
         if (item) {
@@ -937,6 +941,7 @@
           document.getElementById('formProducto').value = item['Producto'] || '';
           document.getElementById('formMarcaTienda').value = item['Marca'] || '';
           document.getElementById('formModeloTienda').value = item['Modelo'] || '';
+          document.getElementById('formSerieTienda').value = item['Numero de Serie'] || '';
         }
       }
     }
@@ -974,6 +979,7 @@
             item['Producto'] = document.getElementById('formProducto').value;
             item['Marca'] = document.getElementById('formMarcaTienda').value;
             item['Modelo'] = document.getElementById('formModeloTienda').value;
+            item['Numero de Serie'] = document.getElementById('formSerieTienda').value;
           }
           logAction('EDICION', `Edición realizada en ${currentDataset} para índice ${rIdx}`);
         }
