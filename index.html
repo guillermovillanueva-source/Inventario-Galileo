@@ -5,14 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Inventario Galileo - Service Desk Admin</title>
 
-  <!-- Favicon Dinámico Isotipo "IG" -->
+  <!-- Favicon Isotipo "IG" -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23171a1f'/><circle cx='50' cy='50' r='42' fill='none' stroke='%233b82f6' stroke-width='4'/><text x='30' y='68' font-family='Arial, sans-serif' font-weight='900' font-size='50' fill='%233b82f6'>I</text><text x='48' y='68' font-family='Arial, sans-serif' font-weight='900' font-size='50' fill='%23ffffff'>G</text></svg>" />
   
-  <!-- Tailwind CSS -->
+  <!-- Tailwind CSS & Chart.js & PapaParse -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- PapaParse -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
   <style>
@@ -28,7 +26,7 @@
 </head>
 <body class="font-sans antialiased flex h-screen overflow-hidden text-xs">
 
-  <!-- MODAL DE LOGIN OBLIGATORIO -->
+  <!-- MODAL LOGIN -->
   <div id="loginModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-panel border border-rocker rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
       <div class="text-center space-y-1">
@@ -67,7 +65,7 @@
     </div>
   </div>
 
-  <!-- Sidebar Lateral Estilo Service Desk -->
+  <!-- SIDEBAR -->
   <aside class="w-64 bg-[#171a1f] border-r border-rocker flex flex-col justify-between shrink-0 z-40 hidden md:flex">
     <div>
       <div class="h-14 px-6 border-b border-rocker flex items-center justify-between">
@@ -139,10 +137,10 @@
     </div>
   </aside>
 
-  <!-- Contenido Central -->
+  <!-- CONTENIDO CENTRAL -->
   <div class="flex-1 flex flex-col h-full overflow-y-auto">
 
-    <!-- Topbar Header -->
+    <!-- TOPBAR -->
     <header class="h-14 bg-[#171a1f] border-b border-rocker px-6 flex items-center justify-between shrink-0 sticky top-0 z-30">
       <div class="flex items-center gap-4 flex-1 max-w-md">
         <div class="relative w-full">
@@ -160,9 +158,7 @@
         </button>
 
         <div class="flex items-center gap-2 border-l border-rocker pl-4">
-          <div id="userAvatar" class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-xs shadow-md uppercase">
-            --
-          </div>
+          <div id="userAvatar" class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-xs shadow-md uppercase">--</div>
           <div class="hidden sm:block text-left">
             <p id="userMailDisplay" class="text-white font-bold leading-none text-xs">Cargando...</p>
             <div class="flex items-center gap-1.5 mt-0.5">
@@ -174,21 +170,17 @@
       </div>
     </header>
 
-    <!-- Main Dashboard Area -->
+    <!-- DASHBOARD MAIN -->
     <main class="p-6 space-y-6 max-w-[1600px] w-full mx-auto">
 
-      <div id="viewContainer" class="space-y-6">
-        <!-- Generado dinámicamente -->
-      </div>
+      <div id="viewContainer" class="space-y-6"></div>
 
-      <!-- Filtros Multicriterio Dinámicos -->
+      <!-- FILTROS MULTICRITERIO -->
       <div id="filterSection" class="bg-panel p-4 rounded-xl border border-rocker shadow-xl space-y-3">
-        <div id="filterContainerGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <!-- Dinámico según HQ o TIENDAS -->
-        </div>
+        <div id="filterContainerGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
       </div>
 
-      <!-- Tabla Principal de Activos Dinámica -->
+      <!-- TABLA PRINCIPAL -->
       <div id="tableSection" class="bg-panel rounded-xl border border-rocker shadow-xl overflow-hidden">
         <div class="p-4 border-b border-rocker flex justify-between items-center">
           <h2 id="tableTitleDisplay" class="text-sm font-bold text-white">Listado Completo - HQ Corporativo</h2>
@@ -199,16 +191,14 @@
 
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-300">
-            <thead id="tableHeaderHead" class="bg-[#0f1115] text-slate-400 uppercase tracking-wider border-b border-rocker text-[10px]">
-              <!-- Renderizado dinámicamente -->
-            </thead>
+            <thead id="tableHeaderHead" class="bg-[#0f1115] text-slate-400 uppercase tracking-wider border-b border-rocker text-[10px]"></thead>
             <tbody id="inventoryTable" class="divide-y divide-rocker">
-              <tr><td colspan="10" class="text-center p-8 text-slate-600">Inicia sesión para consultar información...</td></tr>
+              <tr><td colspan="10" class="text-center p-8 text-slate-600">Cargando información...</td></tr>
             </tbody>
           </table>
         </div>
 
-        <!-- Paginador -->
+        <!-- PAGINADOR -->
         <div class="p-3 bg-[#0f1115]/50 border-t border-rocker flex flex-col sm:flex-row justify-between items-center gap-3 text-xs">
           <p class="text-slate-500" id="paginationInfo">Mostrando 0 de 0 activos</p>
           <div class="flex items-center gap-2">
@@ -222,7 +212,7 @@
     </main>
   </div>
 
-  <!-- Modal para Altas / Edición -->
+  <!-- MODAL ALTAS/EDICIONAL -->
   <div id="assetModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
     <div class="bg-panel border border-rocker rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col">
       <div class="p-4 border-b border-rocker flex justify-between items-center bg-[#0f1115]">
@@ -232,11 +222,7 @@
 
       <form id="assetForm" onsubmit="saveAsset(event)" class="p-6 space-y-4 text-xs max-h-[80vh] overflow-y-auto">
         <input type="hidden" id="editRowIndex" />
-
-        <div id="modalFormContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <!-- Formulario dinámico -->
-        </div>
-
+        <div id="modalFormContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
         <div class="pt-4 border-t border-rocker flex justify-end gap-3">
           <button type="button" onclick="closeModal()" class="px-4 py-2 border border-rocker rounded-lg text-slate-400 hover:text-white">Cancelar</button>
           <button type="submit" id="btnSave" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition">Guardar Cambios</button>
@@ -339,27 +325,33 @@
     function fetchData() {
       const targetUrl = currentDataset === 'HQ' ? SHEET_HQ_URL : SHEET_TIENDAS_URL;
 
+      // Limpiar tabla antes de la petición
+      document.getElementById('inventoryTable').innerHTML = '<tr><td colspan="10" class="text-center p-8 text-slate-500">Cargando datos asíncronamente...</td></tr>';
+
       Papa.parse(targetUrl, {
         download: true,
         header: false,
         skipEmptyLines: true,
+        fastMode: true, // Optimización de velocidad
         complete: function(results) {
           const rawRows = results.data || [];
           
-          if (currentDataset === 'HQ') {
-            parseHQData(rawRows);
-          } else {
-            parseTiendasData(rawRows);
-          }
+          setTimeout(() => {
+            if (currentDataset === 'HQ') {
+              parseHQData(rawRows);
+            } else {
+              parseTiendasDataFast(rawRows);
+            }
 
-          populateFilterDropdowns(globalData);
-          applyFilters();
+            populateFilterDropdowns(globalData);
+            applyFilters();
+          }, 50);
         }
       });
     }
 
     function parseHQData(rawRows) {
-      let headerIndex = rawRows.findIndex(row => row.some(cell => String(cell).includes('Numero de Serie') || String(cell).includes('Responsable')));
+      let headerIndex = rawRows.findIndex(row => row && row.some(cell => String(cell).includes('Numero de Serie') || String(cell).includes('Responsable')));
       if (headerIndex === -1) headerIndex = 9;
 
       const headers = (rawRows[headerIndex] || []).map(h => String(h).trim());
@@ -374,32 +366,34 @@
       }).filter(item => item['Mail'] || item['Responsable del activo'] || item['Numero de Serie']);
     }
 
-    // Normalizador Ultraligero y Seguro para Tiendas (Sin Bloqueos)
-    function parseTiendasData(rawRows) {
-      const parsed = [];
-      for (let i = 0; i < rawRows.length; i++) {
+    // Parser asíncrono ultra-rápido de Tiendas que previene el congelamiento
+    function parseTiendasDataFast(rawRows) {
+      const result = [];
+      const len = rawRows.length;
+
+      for (let i = 0; i < len; i++) {
         const row = rawRows[i];
-        if (!row || row.length === 0) continue;
+        if (!row || row.length < 2) continue;
 
-        const col0 = String(row[0] || '').trim();
-        const col1 = String(row[1] || '').trim();
-        const col2 = String(row[2] || '').trim();
-        const col3 = String(row[3] || '').trim();
+        const c0 = String(row[0] || '').trim();
+        const c1 = String(row[1] || '').trim();
+        const c2 = String(row[2] || '').trim();
+        const c3 = String(row[3] || '').trim();
 
-        if (!col0 && !col1 && !col2) continue;
+        // Omitir vacíos o encabezados
+        if (!c0 && !c1) continue;
+        if (c0.toLowerCase().includes('tienda') || c0.toLowerCase().includes('responsable')) continue;
 
-        // Omitir posibles títulos de sección o encabezados
-        if (col0.toLowerCase().includes('tienda') && col1.toLowerCase().includes('producto')) continue;
-
-        parsed.push({
+        result.push({
           _rowIndex: i,
-          'Tienda': col0 || 'Tienda ' + (i + 1),
-          'Producto': col1 || 'Dispositivo Retail',
-          'Marca': col2 || (col3.toLowerCase().includes('mac') || col3.toLowerCase().includes('ipad') ? 'Apple' : 'Lenovo'),
-          'Modelo': col3 || 'Estándar'
+          'Tienda': c0 || 'Tienda Genérica',
+          'Producto': c1 || 'Dispositivo Retail',
+          'Marca': c2 || (c3.toLowerCase().includes('mac') || c3.toLowerCase().includes('ipad') ? 'Apple' : 'Lenovo'),
+          'Modelo': c3 || 'Estándar'
         });
       }
-      globalData = parsed;
+
+      globalData = result;
     }
 
     function renderFilterControls() {
