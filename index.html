@@ -3,21 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Inventario Galileo - Service Desk Admin</title>
+  <title>Inventario Galileo - Rocker Admin</title>
 
-  <!-- Favicon Isotipo "IG" -->
+  <!-- Favicon Dinámico Isotipo "IG" -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23171a1f'/><circle cx='50' cy='50' r='42' fill='none' stroke='%233b82f6' stroke-width='4'/><text x='30' y='68' font-family='Arial, sans-serif' font-weight='900' font-size='50' fill='%233b82f6'>I</text><text x='48' y='68' font-family='Arial, sans-serif' font-weight='900' font-size='50' fill='%23ffffff'>G</text></svg>" />
   
-  <!-- Tailwind CSS & Chart.js & PapaParse -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- PapaParse -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
   <style>
-    body { background-color: #0f1115; color: #9ea4b0; }
-    .bg-panel { background-color: #171a1f; }
-    .bg-panel-hover:hover { background-color: #1f232b; }
-    .border-rocker { border-color: #242830; }
+    body {
+      background-color: #0f1115;
+      color: #9ea4b0;
+    }
+    .bg-panel {
+      background-color: #171a1f;
+    }
+    .bg-panel-hover:hover {
+      background-color: #1f232b;
+    }
+    .border-rocker {
+      border-color: #242830;
+    }
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: #0f1115; }
     ::-webkit-scrollbar-thumb { background: #2b303c; border-radius: 4px; }
@@ -26,7 +37,7 @@
 </head>
 <body class="font-sans antialiased flex h-screen overflow-hidden text-xs">
 
-  <!-- MODAL LOGIN -->
+  <!-- MODAL DE LOGIN OBLIGATORIO -->
   <div id="loginModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-panel border border-rocker rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
       <div class="text-center space-y-1">
@@ -65,7 +76,7 @@
     </div>
   </div>
 
-  <!-- SIDEBAR -->
+  <!-- Sidebar Lateral Estilo Rocker -->
   <aside class="w-64 bg-[#171a1f] border-r border-rocker flex flex-col justify-between shrink-0 z-40 hidden md:flex">
     <div>
       <div class="h-14 px-6 border-b border-rocker flex items-center justify-between">
@@ -73,11 +84,12 @@
           <div class="w-8 h-8 bg-[#0f1115] border border-blue-500/50 rounded-xl flex items-center justify-center font-black text-sm tracking-tighter">
             <span class="text-blue-500">I</span><span class="text-white">G</span>
           </div>
-          Service Desk <span class="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded uppercase tracking-wider font-mono">ITAM</span>
+          Rocker <span class="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded uppercase tracking-wider font-mono">ITAM</span>
         </div>
       </div>
 
       <nav class="p-4 space-y-2">
+        <!-- SELECTOR DE INVENTARIOS -->
         <div class="bg-[#0f1115] p-2.5 rounded-xl border border-rocker space-y-1.5 mb-3">
           <label class="block text-[10px] font-bold text-blue-400 uppercase tracking-wider">Origen de Datos</label>
           <select id="datasetSelector" onchange="switchDataset(this.value)" class="w-full bg-[#171a1f] border border-rocker text-slate-200 px-2 py-1.5 rounded-lg focus:outline-none focus:border-blue-500 text-xs font-semibold">
@@ -133,14 +145,14 @@
     </div>
 
     <div class="p-4 border-t border-rocker text-[10px] text-slate-600">
-      Galileo Service Desk © 2026
+      Galileo ITAM © 2026
     </div>
   </aside>
 
-  <!-- CONTENIDO CENTRAL -->
+  <!-- Contenido Central -->
   <div class="flex-1 flex flex-col h-full overflow-y-auto">
 
-    <!-- TOPBAR -->
+    <!-- Topbar Header -->
     <header class="h-14 bg-[#171a1f] border-b border-rocker px-6 flex items-center justify-between shrink-0 sticky top-0 z-30">
       <div class="flex items-center gap-4 flex-1 max-w-md">
         <div class="relative w-full">
@@ -158,7 +170,9 @@
         </button>
 
         <div class="flex items-center gap-2 border-l border-rocker pl-4">
-          <div id="userAvatar" class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-xs shadow-md uppercase">--</div>
+          <div id="userAvatar" class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-xs shadow-md uppercase">
+            --
+          </div>
           <div class="hidden sm:block text-left">
             <p id="userMailDisplay" class="text-white font-bold leading-none text-xs">Cargando...</p>
             <div class="flex items-center gap-1.5 mt-0.5">
@@ -170,17 +184,21 @@
       </div>
     </header>
 
-    <!-- DASHBOARD MAIN -->
+    <!-- Main Dashboard Area -->
     <main class="p-6 space-y-6 max-w-[1600px] w-full mx-auto">
 
-      <div id="viewContainer" class="space-y-6"></div>
-
-      <!-- FILTROS MULTICRITERIO -->
-      <div id="filterSection" class="bg-panel p-4 rounded-xl border border-rocker shadow-xl space-y-3">
-        <div id="filterContainerGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+      <div id="viewContainer" class="space-y-6">
+        <!-- Generado dinámicamente -->
       </div>
 
-      <!-- TABLA PRINCIPAL -->
+      <!-- Filtros Multicriterio Dinámicos -->
+      <div id="filterSection" class="bg-panel p-4 rounded-xl border border-rocker shadow-xl space-y-3">
+        <div id="filterContainerGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <!-- Dinámico según HQ o TIENDAS -->
+        </div>
+      </div>
+
+      <!-- Tabla Principal de Activos Dinámica -->
       <div id="tableSection" class="bg-panel rounded-xl border border-rocker shadow-xl overflow-hidden">
         <div class="p-4 border-b border-rocker flex justify-between items-center">
           <h2 id="tableTitleDisplay" class="text-sm font-bold text-white">Listado Completo - HQ Corporativo</h2>
@@ -191,14 +209,16 @@
 
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-300">
-            <thead id="tableHeaderHead" class="bg-[#0f1115] text-slate-400 uppercase tracking-wider border-b border-rocker text-[10px]"></thead>
+            <thead id="tableHeaderHead" class="bg-[#0f1115] text-slate-400 uppercase tracking-wider border-b border-rocker text-[10px]">
+              <!-- Renderizado dinámicamente -->
+            </thead>
             <tbody id="inventoryTable" class="divide-y divide-rocker">
-              <tr><td colspan="10" class="text-center p-8 text-slate-600">Cargando información...</td></tr>
+              <tr><td colspan="10" class="text-center p-8 text-slate-600">Inicia sesión para consultar información...</td></tr>
             </tbody>
           </table>
         </div>
 
-        <!-- PAGINADOR -->
+        <!-- Paginador -->
         <div class="p-3 bg-[#0f1115]/50 border-t border-rocker flex flex-col sm:flex-row justify-between items-center gap-3 text-xs">
           <p class="text-slate-500" id="paginationInfo">Mostrando 0 de 0 activos</p>
           <div class="flex items-center gap-2">
@@ -212,7 +232,7 @@
     </main>
   </div>
 
-  <!-- MODAL ALTAS/EDICIONAL -->
+  <!-- Modal para Altas / Edición -->
   <div id="assetModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
     <div class="bg-panel border border-rocker rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col">
       <div class="p-4 border-b border-rocker flex justify-between items-center bg-[#0f1115]">
@@ -222,7 +242,11 @@
 
       <form id="assetForm" onsubmit="saveAsset(event)" class="p-6 space-y-4 text-xs max-h-[80vh] overflow-y-auto">
         <input type="hidden" id="editRowIndex" />
-        <div id="modalFormContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+
+        <div id="modalFormContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Formulario dinámico -->
+        </div>
+
         <div class="pt-4 border-t border-rocker flex justify-end gap-3">
           <button type="button" onclick="closeModal()" class="px-4 py-2 border border-rocker rounded-lg text-slate-400 hover:text-white">Cancelar</button>
           <button type="submit" id="btnSave" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition">Guardar Cambios</button>
@@ -232,6 +256,7 @@
   </div>
 
   <script>
+    // URLS CSV ORIGEN
     const SHEET_HQ_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6O7VuFl6hhj6TzvCYlHF5mVq6qQz49oTsFurFP7yINJzTjNddurEHG_GQCVsy4cqEO8ntD_m1WYi-/pub?gid=1154664784&single=true&output=csv';
     const SHEET_TIENDAS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVj5iUE5wOYEvbzeIKp1nIJwQ9gYbAPqK9KGid2hmsVxjHeL4OclmpwJDUoaKYJSCsN6K3IgCHHuQl/pub?gid=1184661297&single=true&output=csv';
 
@@ -325,36 +350,30 @@
     function fetchData() {
       const targetUrl = currentDataset === 'HQ' ? SHEET_HQ_URL : SHEET_TIENDAS_URL;
 
-      // Limpiar tabla antes de la petición
-      document.getElementById('inventoryTable').innerHTML = '<tr><td colspan="10" class="text-center p-8 text-slate-500">Cargando datos asíncronamente...</td></tr>';
-
       Papa.parse(targetUrl, {
         download: true,
         header: false,
         skipEmptyLines: true,
-        fastMode: true, // Optimización de velocidad
         complete: function(results) {
-          const rawRows = results.data || [];
+          const rawRows = results.data;
           
-          setTimeout(() => {
-            if (currentDataset === 'HQ') {
-              parseHQData(rawRows);
-            } else {
-              parseTiendasDataFast(rawRows);
-            }
+          if (currentDataset === 'HQ') {
+            parseHQData(rawRows);
+          } else {
+            parseTiendasData(rawRows);
+          }
 
-            populateFilterDropdowns(globalData);
-            applyFilters();
-          }, 50);
+          populateFilterDropdowns(globalData);
+          applyFilters();
         }
       });
     }
 
     function parseHQData(rawRows) {
-      let headerIndex = rawRows.findIndex(row => row && row.some(cell => String(cell).includes('Numero de Serie') || String(cell).includes('Responsable')));
+      let headerIndex = rawRows.findIndex(row => row.some(cell => String(cell).includes('Numero de Serie') || String(cell).includes('Responsable')));
       if (headerIndex === -1) headerIndex = 9;
 
-      const headers = (rawRows[headerIndex] || []).map(h => String(h).trim());
+      const headers = rawRows[headerIndex].map(h => String(h).trim());
       const dataRows = rawRows.slice(headerIndex + 1);
 
       globalData = dataRows.map((row, idx) => {
@@ -366,34 +385,40 @@
       }).filter(item => item['Mail'] || item['Responsable del activo'] || item['Numero de Serie']);
     }
 
-    // Parser asíncrono ultra-rápido de Tiendas que previene el congelamiento
-    function parseTiendasDataFast(rawRows) {
-      const result = [];
-      const len = rawRows.length;
+    // Normalizador Exclusivo Tiendas (Tienda, Producto, Marca, Modelo)
+    function parseTiendasData(rawRows) {
+      let headerIndex = rawRows.findIndex(row => row.some(cell => 
+        String(cell).toLowerCase().includes('tienda') || 
+        String(cell).toLowerCase().includes('producto') || 
+        String(cell).toLowerCase().includes('marca') ||
+        String(cell).toLowerCase().includes('modelo')
+      ));
 
-      for (let i = 0; i < len; i++) {
-        const row = rawRows[i];
-        if (!row || row.length < 2) continue;
+      if (headerIndex === -1) headerIndex = 0;
 
-        const c0 = String(row[0] || '').trim();
-        const c1 = String(row[1] || '').trim();
-        const c2 = String(row[2] || '').trim();
-        const c3 = String(row[3] || '').trim();
+      const headers = rawRows[headerIndex].map(h => String(h).trim());
+      const dataRows = rawRows.slice(headerIndex + 1);
 
-        // Omitir vacíos o encabezados
-        if (!c0 && !c1) continue;
-        if (c0.toLowerCase().includes('tienda') || c0.toLowerCase().includes('responsable')) continue;
-
-        result.push({
-          _rowIndex: i,
-          'Tienda': c0 || 'Tienda Genérica',
-          'Producto': c1 || 'Dispositivo Retail',
-          'Marca': c2 || (c3.toLowerCase().includes('mac') || c3.toLowerCase().includes('ipad') ? 'Apple' : 'Lenovo'),
-          'Modelo': c3 || 'Estándar'
+      globalData = dataRows.map((row, idx) => {
+        let rawObj = {};
+        headers.forEach((h, i) => {
+          rawObj[h] = row[i] ? String(row[i]).trim() : '';
         });
-      }
 
-      globalData = result;
+        // Mapeo 4 Encabezados Tienda
+        const tienda = rawObj['Tienda'] || rawObj['Sucursal'] || rawObj['Ubicacion'] || 'Tienda Sin Nombre';
+        const producto = rawObj['Producto'] || rawObj['Equipo'] || rawObj['Tipo'] || 'Dispositivo Retail';
+        const marca = rawObj['Marca'] || (String(rawObj['Modelo'] || '').toLowerCase().includes('mac') ? 'Apple' : 'Lenovo');
+        const modelo = rawObj['Modelo'] || rawObj['Dispositivo'] || 'Estándar';
+
+        return {
+          _rowIndex: idx,
+          'Tienda': tienda,
+          'Producto': producto,
+          'Marca': marca,
+          'Modelo': modelo
+        };
+      }).filter(item => item['Tienda'] && item['Tienda'] !== 'Tienda Sin Nombre');
     }
 
     function renderFilterControls() {
@@ -528,7 +553,7 @@
     }
 
     function applyFilters() {
-      const searchGlobal = (document.getElementById('searchInput')?.value || '').toLowerCase();
+      const searchGlobal = document.getElementById('searchInput').value.toLowerCase();
 
       if (currentDataset === 'HQ') {
         const filterNombre = (document.getElementById('filterNombre')?.value || '').toLowerCase();
@@ -692,10 +717,11 @@
           renderModeloHQCharts(data);
         }
       } else {
+        // DASHBOARD EXCLUSIVO TIENDAS (Tienda, Producto, Marca, Modelo)
         container.innerHTML = `
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-              <h2 class="text-sm font-bold text-blue-400 mb-4">🏪 Dispositivos por Tienda (Top Sucursales)</h2>
+              <h2 class="text-sm font-bold text-blue-400 mb-4">🏪 Dispositivos por Tienda (Top 10 Sucursales)</h2>
               <div class="h-64"><canvas id="c1"></canvas></div>
             </div>
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
@@ -774,6 +800,7 @@
       });
     }
 
+    // Gráficos Exclusivos Tiendas
     function renderTiendasCharts(data) {
       const tiendaCount = {};
       data.forEach(d => { const t = (d['Tienda'] || 'N/D').trim(); tiendaCount[t] = (tiendaCount[t] || 0) + 1; });
@@ -838,6 +865,7 @@
               <td class="p-3 text-center">${actionBtn}</td>
             `;
           } else {
+            // TABLA TIENDAS (Tienda, Producto, Marca, Modelo)
             tr.innerHTML = `
               <td class="p-3 font-bold text-blue-400">${row['Tienda'] || 'N/A'}</td>
               <td class="p-3 font-semibold text-purple-300">${row['Producto'] || 'N/A'}</td>
@@ -894,6 +922,7 @@
           document.getElementById('formVida').value = item['Años de Vida Remanente'] || '0';
         }
       } else {
+        // FORMULARIO EXCLUSIVO TIENDAS (Tienda, Producto, Marca, Modelo)
         formContainer.innerHTML = `
           <div><label class="block text-slate-400 mb-1 font-bold text-blue-400">Tienda / Sucursal</label><input type="text" id="formTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Tienda Roma"></div>
           <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Producto</label><input type="text" id="formProducto" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad, Impresora, PC POS"></div>
