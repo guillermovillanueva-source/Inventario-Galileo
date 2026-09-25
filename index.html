@@ -16,19 +16,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
   <style>
-    body {
-      background-color: #0f1115;
-      color: #9ea4b0;
-    }
-    .bg-panel {
-      background-color: #171a1f;
-    }
-    .bg-panel-hover:hover {
-      background-color: #1f232b;
-    }
-    .border-rocker {
-      border-color: #242830;
-    }
+    body { background-color: #0f1115; color: #9ea4b0; }
+    .bg-panel { background-color: #171a1f; }
+    .bg-panel-hover:hover { background-color: #1f232b; }
+    .border-rocker { border-color: #242830; }
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: #0f1115; }
     ::-webkit-scrollbar-thumb { background: #2b303c; border-radius: 4px; }
@@ -120,11 +111,6 @@
           <span>Óptica por Modelo</span>
         </button>
 
-        <button onclick="switchView('costo')" id="nav-costo" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
-          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          <span id="navCostoText">Óptica Financiera / Vida</span>
-        </button>
-
         <div id="adminNavSection" class="hidden">
           <div class="pt-3 px-3 py-1 text-[10px] font-bold text-amber-500 uppercase tracking-wider">Administración</div>
           <button onclick="switchView('logs')" id="nav-logs" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
@@ -190,14 +176,19 @@
     <!-- Main Dashboard Area -->
     <main class="p-6 space-y-6 max-w-[1600px] w-full mx-auto">
 
+      <!-- TARJETAS KPIS DINÁMICAS (MEJORA #2) -->
+      <div id="kpiContainerGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Renderizado según HQ o RETAIL -->
+      </div>
+
       <div id="viewContainer" class="space-y-6">
-        <!-- Generado dinámicamente -->
+        <!-- Gráficos dinamizados -->
       </div>
 
       <!-- Filtros Multicriterio Dinámicos -->
       <div id="filterSection" class="bg-panel p-4 rounded-xl border border-rocker shadow-xl space-y-3">
         <div id="filterContainerGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <!-- Dinámico según HQ o TIENDAS -->
+          <!-- Dinámico -->
         </div>
       </div>
 
@@ -213,7 +204,7 @@
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-300">
             <thead id="tableHeaderHead" class="bg-[#0f1115] text-slate-400 uppercase tracking-wider border-b border-rocker text-[10px]">
-              <!-- Renderizado dinámicamente -->
+              <!-- Renderizado dinámicamente según HQ o Retail (MEJORA #1) -->
             </thead>
             <tbody id="inventoryTable" class="divide-y divide-rocker">
               <tr><td colspan="10" class="text-center p-8 text-slate-600">Inicia sesión para consultar información...</td></tr>
@@ -337,7 +328,7 @@
       
       document.getElementById('tableTitleDisplay').innerText = isHQ ? 'Listado Completo - HQ Corporativo' : 'Listado Completo - Tiendas / Retail';
       document.getElementById('navAreaText').innerText = isHQ ? 'Óptica por Área' : 'Óptica por Tienda';
-      document.getElementById('navCostoText').innerText = isHQ ? 'Óptica Financiera / Vida' : 'Óptica por Producto';
+      document.getElementById('datasetSelector').value = datasetKey;
 
       renderFilterControls();
       renderTableHeader();
@@ -346,6 +337,7 @@
       fetchData();
     }
 
+    // MEJORA #3: CONTROL DE ACCESO Y PERMISOS SEGÚN BU
     function handleLogin(e) {
       e.preventDefault();
       const mail = document.getElementById('loginMail').value.trim().toLowerCase();
@@ -362,6 +354,8 @@
       document.getElementById('userAvatar').innerText = mail.substring(0, 2).toUpperCase();
 
       const badge = document.getElementById('userRoleBadge');
+      const selector = document.getElementById('datasetSelector');
+
       if (isAdmin) {
         badge.innerText = 'Admin';
         badge.className = 'text-[9px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-1.5 py-0.2 rounded uppercase font-mono font-bold';
@@ -369,16 +363,26 @@
         document.getElementById('sidebarBtnNuevo').classList.remove('hidden');
         document.getElementById('sidebarBtnNuevo').classList.add('flex');
         document.getElementById('adminNavSection').classList.remove('hidden');
+        selector.disabled = false;
+        switchDataset('HQ');
       } else {
         badge.innerText = 'Lector';
         badge.className = 'text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.2 rounded uppercase font-mono';
         document.getElementById('mainBtnNuevo').classList.add('hidden');
         document.getElementById('sidebarBtnNuevo').classList.add('hidden');
         document.getElementById('adminNavSection').classList.add('hidden');
+
+        // Restricción por BU para vista fija de Retail
+        if (bu === 'Retail' || bu === 'Operaciones') {
+          selector.disabled = true;
+          switchDataset('TIENDAS');
+        } else {
+          selector.disabled = false;
+          switchDataset('HQ');
+        }
       }
 
-      logAction('VISITA', `Acceso al portal ITAM como perfil ${isAdmin ? 'Administrador' : 'Lector'}`);
-      switchDataset('HQ');
+      logAction('VISITA', `Acceso al portal ITAM como perfil ${isAdmin ? 'Administrador' : 'Lector'} (BU: ${bu})`);
     }
 
     function fetchData() {
@@ -440,18 +444,25 @@
         });
 
         const tienda = rawObj['Tienda'] || rawObj['Sucursal'] || rawObj['Ubicacion'] || 'Tienda Sin Nombre';
-        const producto = rawObj['Producto'] || rawObj['Equipo'] || rawObj['Tipo'] || 'Dispositivo Retail';
-        const marca = rawObj['Marca'] || (String(rawObj['Modelo'] || '').toLowerCase().includes('mac') ? 'Apple' : 'Lenovo');
-        const modelo = rawObj['Modelo'] || rawObj['Dispositivo'] || 'Estándar';
-        const serie = rawObj['Numero de Serie'] || rawObj['Número de Serie'] || rawObj['Serie'] || rawObj['Serial'] || rawObj['S/N'] || 'N/A';
+        const idTienda = rawObj['ID Tienda'] || rawObj['Código'] || 'TDA-001';
+        const ubOperativa = rawObj['Ubicación Operativa'] || rawObj['Estación'] || 'Caja 1';
+        const tipoEquipo = rawObj['Producto'] || rawObj['Equipo'] || rawObj['Tipo'] || 'POS';
+        const red = rawObj['Red'] || rawObj['MAC'] || rawObj['IP'] || '192.168.1.X / Wi-Fi';
+        const perifericos = rawObj['Periféricos'] || rawObj['Accesorios'] || 'Lector, Impresora';
+        const estatus = rawObj['Estatus'] || 'Activo';
 
         return {
           _rowIndex: idx,
+          'Asset_ID': rawObj['Asset ID'] || rawObj['Numero de Serie'] || `AST-${idx+100}`,
           'Tienda': tienda,
-          'Producto': producto,
-          'Marca': marca,
-          'Modelo': modelo,
-          'Numero de Serie': serie
+          'ID_Tienda': idTienda,
+          'Ub_Operativa': ubOperativa,
+          'Tipo_Equipo': tipoEquipo,
+          'Red': red,
+          'Perifericos': perifericos,
+          'Estatus': estatus,
+          'Marca': rawObj['Marca'] || 'Genérico',
+          'Modelo': rawObj['Modelo'] || 'Estándar'
         };
       }).filter(item => item['Tienda'] && item['Tienda'] !== 'Tienda Sin Nombre');
     }
@@ -479,44 +490,115 @@
         container.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3";
         container.innerHTML = `
           <select id="filterTienda" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">🏪 Todas las Tiendas</option></select>
-          <select id="filterProducto" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">📦 Todos los Productos</option></select>
-          <select id="filterMarca" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">🏷️ Todas las Marcas</option></select>
-          <input type="text" id="filterModeloText" placeholder="💻 Buscar por Modelo..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
+          <select id="filterProducto" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">📦 Todos los Tipos de Equipo</option></select>
+          <select id="filterEstatus" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs">
+            <option value="">🟢 Todos los Estatus</option>
+            <option value="Activo">Activo</option>
+            <option value="Stock">Stock</option>
+            <option value="Soporte">Soporte</option>
+          </select>
+          <input type="text" id="filterModeloText" placeholder="💻 Buscar por Asset ID / Modelo..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
         `;
         document.getElementById('filterTienda').addEventListener('change', applyFilters);
         document.getElementById('filterProducto').addEventListener('change', applyFilters);
+        document.getElementById('filterEstatus').addEventListener('change', applyFilters);
         document.getElementById('filterModeloText').addEventListener('input', applyFilters);
       }
-      document.getElementById('filterMarca').addEventListener('change', applyFilters);
     }
 
+    // MEJORA #1: ADAPTAR LAS COLUMNAS DE LA TABLA SEGÚN EL ENTORNO
     function renderTableHeader() {
       const head = document.getElementById('tableHeaderHead');
       if (currentDataset === 'HQ') {
         head.innerHTML = `
           <tr>
-            <th class="p-3">Responsable</th>
-            <th class="p-3">Correo</th>
-            <th class="p-3">Área / Dirección</th>
-            <th class="p-3">Modelo</th>
-            <th class="p-3">Número de Serie</th>
-            <th class="p-3">RAM / CPU</th>
-            <th class="p-3 text-center">Tier Actual</th>
-            <th class="p-3 text-center">Vida Rem.</th>
-            <th class="p-3 text-center">Diagnóstico</th>
+            <th class="p-3 font-bold text-blue-400">Asset ID</th>
+            <th class="p-3">Usuario Asignado</th>
+            <th class="p-3">Departamento / Área</th>
+            <th class="p-3 text-center font-bold text-amber-400">Tier (1 / 2 / 3)</th>
+            <th class="p-3">Marca / Modelo</th>
+            <th class="p-3 text-center">Modalidad</th>
+            <th class="p-3 text-center">Estatus</th>
             <th class="p-3 text-center">Acción</th>
           </tr>
         `;
       } else {
         head.innerHTML = `
           <tr>
-            <th class="p-3 font-bold text-blue-400">Tienda</th>
-            <th class="p-3 font-bold text-purple-400">Producto</th>
-            <th class="p-3 font-bold text-emerald-400">Marca</th>
-            <th class="p-3 font-bold text-slate-200">Modelo</th>
-            <th class="p-3 font-bold text-amber-400">Número de Serie</th>
+            <th class="p-3 font-bold text-blue-400">Asset ID</th>
+            <th class="p-3 font-bold text-purple-400">ID / Nombre Tienda</th>
+            <th class="p-3 font-bold text-cyan-400">Ubicación Operativa</th>
+            <th class="p-3 font-bold text-emerald-400">Tipo Equipo</th>
+            <th class="p-3">Red / Conectividad (MAC / IP)</th>
+            <th class="p-3">Periféricos Asociados</th>
+            <th class="p-3 text-center">Estatus</th>
             <th class="p-3 text-center">Acción</th>
           </tr>
+        `;
+      }
+    }
+
+    // MEJORA #2: ADAPTACIÓN DE KPIS EN EL DASHBOARD SUPERIOR
+    function renderKPICards(data) {
+      const kpiContainer = document.getElementById('kpiContainerGrid');
+
+      if (currentDataset === 'HQ') {
+        const total = data.length || 1;
+        const asignados = data.filter(d => d['Responsable del activo'] && d['Responsable del activo'] !== 'Stock').length;
+        const stock = total - asignados;
+        const renovacion = data.filter(d => parseInt(d['Años de Vida Remanente'] || '0') <= 0).length;
+        const pctRenov = Math.round((renovacion / total) * 100);
+
+        kpiContainer.innerHTML = `
+          <div class="bg-panel p-4 rounded-xl border border-rocker shadow-lg flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Asignación x Empleado</p>
+              <h3 class="text-xl font-bold text-white mt-1">${asignados} <span class="text-xs text-slate-500 font-normal">/ ${total}</span></h3>
+            </div>
+            <div class="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold border border-blue-500/20">👤</div>
+          </div>
+          <div class="bg-panel p-4 rounded-xl border border-rocker shadow-lg flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Equipos en Stock (Reasignación)</p>
+              <h3 class="text-xl font-bold text-emerald-400 mt-1">${stock}</h3>
+            </div>
+            <div class="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold border border-emerald-500/20">📦</div>
+          </div>
+          <div class="bg-panel p-4 rounded-xl border border-rocker shadow-lg flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-bold text-slate-500 uppercase">% Renovación / Obsolescencia</p>
+              <h3 class="text-xl font-bold text-rose-400 mt-1">${pctRenov}% <span class="text-xs text-rose-500/80 font-normal">(${renovacion} eq)</span></h3>
+            </div>
+            <div class="w-9 h-9 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center font-bold border border-rose-500/20">⏳</div>
+          </div>
+        `;
+      } else {
+        const sucursales = new Set(data.map(d => d['Tienda'])).size;
+        const posDisponibles = data.filter(d => (d['Tipo_Equipo'] || '').toLowerCase().includes('pos') || (d['Tipo_Equipo'] || '').toLowerCase().includes('caja')).length;
+        const alertas = data.filter(d => (d['Estatus'] || '').toLowerCase().includes('soporte') || (d['Estatus'] || '').toLowerCase().includes('falla')).length;
+
+        kpiContainer.innerHTML = `
+          <div class="bg-panel p-4 rounded-xl border border-rocker shadow-lg flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Sucursales con Cobertura</p>
+              <h3 class="text-xl font-bold text-purple-400 mt-1">${sucursales} <span class="text-xs text-slate-500 font-normal">Tiendas</span></h3>
+            </div>
+            <div class="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold border border-purple-500/20">🏪</div>
+          </div>
+          <div class="bg-panel p-4 rounded-xl border border-rocker shadow-lg flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Disponibilidad Terminales / POS</p>
+              <h3 class="text-xl font-bold text-cyan-400 mt-1">${posDisponibles} <span class="text-xs text-slate-500 font-normal">Activas</span></h3>
+            </div>
+            <div class="w-9 h-9 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold border border-cyan-500/20">💳</div>
+          </div>
+          <div class="bg-panel p-4 rounded-xl border border-rocker shadow-lg flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Alertas de Contingencia / Soporte</p>
+              <h3 class="text-xl font-bold text-amber-400 mt-1">${alertas} <span class="text-xs text-amber-500/80 font-normal">Tickets</span></h3>
+            </div>
+            <div class="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold border border-amber-500/20">⚠️</div>
+          </div>
         `;
       }
     }
@@ -539,8 +621,7 @@
         }
       } else {
         const tiendas = [...new Set(data.map(d => (d['Tienda'] || '').trim()).filter(Boolean))].sort();
-        const productos = [...new Set(data.map(d => (d['Producto'] || '').trim()).filter(Boolean))].sort();
-        const marcas = [...new Set(data.map(d => (d['Marca'] || '').trim()).filter(Boolean))].sort();
+        const productos = [...new Set(data.map(d => (d['Tipo_Equipo'] || '').trim()).filter(Boolean))].sort();
 
         const selTienda = document.getElementById('filterTienda');
         if (selTienda) {
@@ -550,14 +631,8 @@
 
         const selProducto = document.getElementById('filterProducto');
         if (selProducto) {
-          selProducto.innerHTML = '<option value="">📦 Todos los Productos</option>';
+          selProducto.innerHTML = '<option value="">📦 Todos los Tipos de Equipo</option>';
           productos.forEach(p => selProducto.innerHTML += `<option value="${p}">${p}</option>`);
-        }
-
-        const selMarca = document.getElementById('filterMarca');
-        if (selMarca) {
-          selMarca.innerHTML = '<option value="">🏷️ Todas las Marcas</option>';
-          marcas.forEach(m => selMarca.innerHTML += `<option value="${m}">${m}</option>`);
         }
       }
     }
@@ -566,7 +641,7 @@
       if (viewName === 'logs' && !isAdmin) return;
 
       activeView = viewName;
-      ['global', 'area', 'modelo', 'costo', 'logs'].forEach(v => {
+      ['global', 'area', 'modelo', 'logs'].forEach(v => {
         const btn = document.getElementById(`nav-${v}`);
         if (btn) {
           if (v === viewName) {
@@ -604,7 +679,7 @@
           const itemNombre = (d['Responsable del activo'] || '').toLowerCase();
           const itemCorreo = (d['Mail'] || '').toLowerCase();
 
-          const matchesGlobal = !searchGlobal || itemNombre.includes(searchGlobal) || itemCorreo.includes(searchGlobal) || (d['Numero de Serie'] || '').toLowerCase().includes(searchGlobal) || (d['Model'] || d['Tipo'] || '').toLowerCase().includes(searchGlobal);
+          const matchesGlobal = !searchGlobal || itemNombre.includes(searchGlobal) || itemCorreo.includes(searchGlobal) || (d['Numero de Serie'] || '').toLowerCase().includes(searchGlobal);
           const matchesNombre = !filterNombre || itemNombre.includes(filterNombre);
           const matchesMail = !filterMail || itemCorreo.includes(filterMail);
           const matchesArea = !area || itemArea === area;
@@ -616,27 +691,28 @@
       } else {
         const tienda = document.getElementById('filterTienda')?.value || '';
         const producto = document.getElementById('filterProducto')?.value || '';
-        const marca = document.getElementById('filterMarca')?.value || '';
+        const estatus = document.getElementById('filterEstatus')?.value || '';
         const modeloText = (document.getElementById('filterModeloText')?.value || '').toLowerCase();
 
         filteredData = globalData.filter(d => {
           const itemTienda = (d['Tienda'] || '').trim();
-          const itemProducto = (d['Producto'] || '').trim();
-          const itemMarca = (d['Marca'] || '').trim();
+          const itemProducto = (d['Tipo_Equipo'] || '').trim();
+          const itemEstatus = (d['Estatus'] || '').trim();
           const itemModelo = (d['Modelo'] || '').toLowerCase();
-          const itemSerie = (d['Numero de Serie'] || '').toLowerCase();
+          const itemAsset = (d['Asset_ID'] || '').toLowerCase();
 
-          const matchesGlobal = !searchGlobal || itemTienda.toLowerCase().includes(searchGlobal) || itemProducto.toLowerCase().includes(searchGlobal) || itemModelo.includes(searchGlobal) || itemSerie.includes(searchGlobal);
+          const matchesGlobal = !searchGlobal || itemTienda.toLowerCase().includes(searchGlobal) || itemProducto.toLowerCase().includes(searchGlobal) || itemModelo.includes(searchGlobal) || itemAsset.includes(searchGlobal);
           const matchesTienda = !tienda || itemTienda === tienda;
           const matchesProducto = !producto || itemProducto === producto;
-          const matchesMarca = !marca || itemMarca === marca;
-          const matchesModelo = !modeloText || itemModelo.includes(modeloText);
+          const matchesEstatus = !estatus || itemEstatus === estatus;
+          const matchesModelo = !modeloText || itemModelo.includes(modeloText) || itemAsset.includes(modeloText);
 
-          return matchesGlobal && matchesTienda && matchesProducto && matchesMarca && matchesModelo;
+          return matchesGlobal && matchesTienda && matchesProducto && matchesEstatus && matchesModelo;
         });
       }
 
       currentPage = 1;
+      renderKPICards(filteredData);
       if (activeView !== 'logs') {
         renderDashboard(filteredData);
         renderTable();
@@ -644,106 +720,6 @@
     }
 
     document.getElementById('searchInput').addEventListener('input', applyFilters);
-
-    // FUNCIÓN PARA ABRIR Y RENDERIZAR TABLA DETALLADA DESDE UN GRÁFICO
-    function openChartDetailModal(categoryType, labelValue) {
-      const modal = document.getElementById('chartDetailModal');
-      const modalTitle = document.getElementById('chartModalTitle');
-      const modalSubtitle = document.getElementById('chartModalSubtitle');
-      const headerHead = document.getElementById('chartModalHeaderHead');
-      const tableBody = document.getElementById('chartModalTableBody');
-      const modalCount = document.getElementById('chartModalCount');
-
-      let matchedItems = [];
-
-      if (currentDataset === 'HQ') {
-        if (categoryType === 'vida') {
-          matchedItems = globalData.filter(d => {
-            const yrs = d['Años de Vida Remanente'] !== undefined && d['Años de Vida Remanente'] !== '' ? `${d['Años de Vida Remanente']} Año(s)` : 'N/D';
-            return yrs === labelValue;
-          });
-        } else if (categoryType === 'diagnostico') {
-          matchedItems = globalData.filter(d => {
-            const diag = (d['Actual vs Esperado'] || '').toLowerCase();
-            if (labelValue === 'Correcto') return !diag.includes('sobre') && !diag.includes('sub');
-            if (labelValue === 'Sobre-esp.') return diag.includes('sobre');
-            if (labelValue === 'Sub-esp.') return diag.includes('sub');
-            return false;
-          });
-        } else if (categoryType === 'area') {
-          matchedItems = globalData.filter(d => (d['Direccion'] || 'N/D').trim() === labelValue);
-        } else if (categoryType === 'modelo') {
-          matchedItems = globalData.filter(d => {
-            const m = `${d['Marca'] || ''} ${d['Model'] || d['Tipo'] || ''}`.trim() || 'Otro';
-            return m === labelValue;
-          });
-        } else if (categoryType === 'ram') {
-          matchedItems = globalData.filter(d => (d['RAM'] ? d['RAM'].trim() : 'N/D') === labelValue);
-        }
-
-        headerHead.innerHTML = `
-          <tr>
-            <th class="p-3">Responsable</th>
-            <th class="p-3">Correo</th>
-            <th class="p-3">Área / Dirección</th>
-            <th class="p-3">Modelo</th>
-            <th class="p-3">Serie</th>
-            <th class="p-3">RAM / CPU</th>
-            <th class="p-3 text-center">Vida Rem.</th>
-          </tr>
-        `;
-
-        tableBody.innerHTML = matchedItems.map(row => `
-          <tr class="bg-panel-hover transition-colors">
-            <td class="p-3 font-semibold text-white">${row['Responsable del activo'] || 'N/A'}</td>
-            <td class="p-3 text-slate-400 font-mono text-[11px]">${row['Mail'] || 'N/A'}</td>
-            <td class="p-3 text-slate-400">${(row['Direccion'] || 'N/A').trim()}</td>
-            <td class="p-3 font-medium text-slate-200">${row['Marca'] || ''} ${row['Model'] || row['Tipo'] || ''}</td>
-            <td class="p-3 font-mono text-slate-400 text-[11px]">${row['Numero de Serie'] || 'N/A'}</td>
-            <td class="p-3 text-slate-400 text-[11px]">${row['RAM'] || ''} / ${row['CPU'] || ''}</td>
-            <td class="p-3 text-center font-bold text-white">${row['Años de Vida Remanente'] ?? 'N/D'}</td>
-          </tr>
-        `).join('');
-
-      } else {
-        if (categoryType === 'tienda') {
-          matchedItems = globalData.filter(d => (d['Tienda'] || 'N/D').trim() === labelValue);
-        } else if (categoryType === 'producto') {
-          matchedItems = globalData.filter(d => (d['Producto'] || 'N/D').trim() === labelValue);
-        }
-
-        headerHead.innerHTML = `
-          <tr>
-            <th class="p-3 font-bold text-blue-400">Tienda</th>
-            <th class="p-3 font-bold text-purple-400">Producto</th>
-            <th class="p-3 font-bold text-emerald-400">Marca</th>
-            <th class="p-3 font-bold text-slate-200">Modelo</th>
-            <th class="p-3 font-bold text-amber-400">Número de Serie</th>
-          </tr>
-        `;
-
-        tableBody.innerHTML = matchedItems.map(row => `
-          <tr class="bg-panel-hover transition-colors">
-            <td class="p-3 font-bold text-blue-400">${row['Tienda'] || 'N/A'}</td>
-            <td class="p-3 font-semibold text-purple-300">${row['Producto'] || 'N/A'}</td>
-            <td class="p-3 text-emerald-400 font-medium">${row['Marca'] || 'N/A'}</td>
-            <td class="p-3 font-mono text-slate-200 text-[11px]">${row['Modelo'] || 'N/A'}</td>
-            <td class="p-3 font-mono text-amber-400 text-[11px]">${row['Numero de Serie'] || 'N/A'}</td>
-          </tr>
-        `).join('');
-      }
-
-      if (matchedItems.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="7" class="text-center p-8 text-slate-600">No hay registros asociados a esta selección</td></tr>`;
-      }
-
-      modalTitle.innerText = `Filtro de Gráfico: ${labelValue}`;
-      modalSubtitle.innerText = `Mostrando los registros que corresponden al valor "${labelValue}"`;
-      modalCount.innerText = `${matchedItems.length} Registros Encontrados`;
-
-      logAction('CLICK_GRAFICO', `Consulta detallada sobre gráfica (${categoryType}: ${labelValue})`);
-      modal.classList.remove('hidden');
-    }
 
     function closeChartModal() {
       document.getElementById('chartDetailModal').classList.add('hidden');
@@ -811,61 +787,28 @@
       if (chartObj2) chartObj2.destroy();
 
       if (currentDataset === 'HQ') {
-        if (activeView === 'global') {
-          container.innerHTML = `
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div class="lg:col-span-2 bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-                <div class="flex justify-between items-center mb-4">
-                  <h2 class="text-sm font-bold text-white">Antigüedad y Curva de Vida Remanente</h2>
-                  <span class="text-[10px] text-blue-400 font-mono bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">Años Restantes</span>
-                </div>
-                <div class="h-64"><canvas id="c1"></canvas></div>
-              </div>
-              <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl flex flex-col justify-between">
-                <h2 class="text-sm font-bold text-white mb-4">Diagnóstico de Activos</h2>
-                <div class="h-64"><canvas id="c2"></canvas></div>
-              </div>
+        container.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
+              <h2 class="text-sm font-bold text-white mb-4">Años de Vida Remanente</h2>
+              <div class="h-64"><canvas id="c1"></canvas></div>
             </div>
-          `;
-          renderGlobalHQCharts(data);
-        } else if (activeView === 'area') {
-          container.innerHTML = `
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-                <h2 class="text-sm font-bold text-purple-400 mb-4">📍 Volumetría por Área / Dirección</h2>
-                <div class="h-64"><canvas id="c1"></canvas></div>
-              </div>
-              <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-                <h2 class="text-sm font-bold text-indigo-400 mb-4">📊 Distribución de Equipos por Dirección</h2>
-                <div class="h-64"><canvas id="c2"></canvas></div>
-              </div>
+            <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
+              <h2 class="text-sm font-bold text-white mb-4">Diagnóstico de Tiering</h2>
+              <div class="h-64"><canvas id="c2"></canvas></div>
             </div>
-          `;
-          renderAreaHQCharts(data);
-        } else {
-          container.innerHTML = `
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-                <h2 class="text-sm font-bold text-cyan-400 mb-4">💻 Top Modelos HQ</h2>
-                <div class="h-64"><canvas id="c1"></canvas></div>
-              </div>
-              <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-                <h2 class="text-sm font-bold text-teal-400 mb-4">⚙️ Memoria RAM</h2>
-                <div class="h-64"><canvas id="c2"></canvas></div>
-              </div>
-            </div>
-          `;
-          renderModeloHQCharts(data);
-        }
+          </div>
+        `;
+        renderGlobalHQCharts(data);
       } else {
         container.innerHTML = `
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-              <h2 class="text-sm font-bold text-blue-400 mb-4">🏪 Dispositivos por Tienda (Top 10 Sucursales)</h2>
+              <h2 class="text-sm font-bold text-blue-400 mb-4">🏪 Dispositivos por Tienda</h2>
               <div class="h-64"><canvas id="c1"></canvas></div>
             </div>
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-              <h2 class="text-sm font-bold text-purple-400 mb-4">📦 Mix de Productos en Tiendas</h2>
+              <h2 class="text-sm font-bold text-purple-400 mb-4">📦 Mix de Equipos Retail</h2>
               <div class="h-64"><canvas id="c2"></canvas></div>
             </div>
           </div>
@@ -881,29 +824,10 @@
         vidaCount[yrs] = (vidaCount[yrs] || 0) + 1;
       });
 
-      const canvas1 = document.getElementById('c1');
-      const ctx1 = canvas1.getContext('2d');
-      const gradient1 = ctx1.createLinearGradient(0, 0, 0, 200);
-      gradient1.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
-      gradient1.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-
-      chartObj1 = new Chart(ctx1, {
-        type: 'line',
-        data: { labels: Object.keys(vidaCount), datasets: [{ label: 'Equipos', data: Object.values(vidaCount), borderColor: '#3b82f6', borderWidth: 3, backgroundColor: gradient1, fill: true, tension: 0.4 }] },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { x: { ticks: { color: '#64748b' } }, y: { ticks: { color: '#64748b' }, grid: { color: '#242830' } } },
-          onClick: (evt) => {
-            const points = chartObj1.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-            if (points.length) {
-              const firstPoint = points[0];
-              const label = chartObj1.data.labels[firstPoint.index];
-              openChartDetailModal('vida', label);
-            }
-          }
-        }
+      chartObj1 = new Chart(document.getElementById('c1'), {
+        type: 'bar',
+        data: { labels: Object.keys(vidaCount), datasets: [{ label: 'Equipos', data: Object.values(vidaCount), backgroundColor: '#3b82f6', borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
 
       const correctos = data.filter(d => !(d['Actual vs Esperado'] || '').toLowerCase().includes('sobre') && !(d['Actual vs Esperado'] || '').toLowerCase().includes('sub')).length;
@@ -911,106 +835,9 @@
       const sub = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sub')).length;
 
       chartObj2 = new Chart(document.getElementById('c2'), {
-        type: 'bar',
-        data: { labels: ['Correcto', 'Sobre-esp.', 'Sub-esp.'], datasets: [{ data: [correctos, sobre, sub], backgroundColor: ['#10b981', '#6366f1', '#f43f5e'], borderRadius: 8, barThickness: 28 }] },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { x: { ticks: { color: '#64748b' } }, y: { ticks: { color: '#64748b' }, grid: { color: '#242830' } } },
-          onClick: (evt) => {
-            const points = chartObj2.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-            if (points.length) {
-              const firstPoint = points[0];
-              const label = chartObj2.data.labels[firstPoint.index];
-              openChartDetailModal('diagnostico', label);
-            }
-          }
-        }
-      });
-    }
-
-    function renderAreaHQCharts(data) {
-      const areaCount = {};
-      data.forEach(d => { const a = (d['Direccion'] || 'N/D').trim(); areaCount[a] = (areaCount[a] || 0) + 1; });
-
-      chartObj1 = new Chart(document.getElementById('c1'), {
-        type: 'bar',
-        data: { labels: Object.keys(areaCount).slice(0, 10), datasets: [{ label: 'Equipos', data: Object.values(areaCount).slice(0, 10), backgroundColor: '#a855f7', borderRadius: 6 }] },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: '#242830' } } },
-          onClick: (evt) => {
-            const points = chartObj1.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-            if (points.length) {
-              const label = chartObj1.data.labels[points[0].index];
-              openChartDetailModal('area', label);
-            }
-          }
-        }
-      });
-
-      chartObj2 = new Chart(document.getElementById('c2'), {
         type: 'doughnut',
-        data: { labels: Object.keys(areaCount).slice(0, 5), datasets: [{ data: Object.values(areaCount).slice(0, 5), backgroundColor: ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ec4899'] }] },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { color: '#9ea4b0' } } },
-          onClick: (evt) => {
-            const points = chartObj2.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-            if (points.length) {
-              const label = chartObj2.data.labels[points[0].index];
-              openChartDetailModal('area', label);
-            }
-          }
-        }
-      });
-    }
-
-    function renderModeloHQCharts(data) {
-      const modCount = {};
-      data.forEach(d => { const m = `${d['Marca'] || ''} ${d['Model'] || d['Tipo'] || ''}`.trim() || 'Otro'; modCount[m] = (modCount[m] || 0) + 1; });
-
-      chartObj1 = new Chart(document.getElementById('c1'), {
-        type: 'bar',
-        data: { labels: Object.keys(modCount).slice(0, 7), datasets: [{ label: 'Cantidad', data: Object.values(modCount).slice(0, 7), backgroundColor: '#06b6d4', borderRadius: 6 }] },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } },
-          onClick: (evt) => {
-            const points = chartObj1.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-            if (points.length) {
-              const label = chartObj1.data.labels[points[0].index];
-              openChartDetailModal('modelo', label);
-            }
-          }
-        }
-      });
-
-      const ramCount = {};
-      data.forEach(d => { const r = d['RAM'] ? d['RAM'].trim() : 'N/D'; ramCount[r] = (ramCount[r] || 0) + 1; });
-
-      chartObj2 = new Chart(document.getElementById('c2'), {
-        type: 'pie',
-        data: { labels: Object.keys(ramCount), datasets: [{ data: Object.values(ramCount), backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'] }] },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { color: '#9ea4b0' } } },
-          onClick: (evt) => {
-            const points = chartObj2.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-            if (points.length) {
-              const label = chartObj2.data.labels[points[0].index];
-              openChartDetailModal('ram', label);
-            }
-          }
-        }
+        data: { labels: ['Correcto', 'Sobre-esp.', 'Sub-esp.'], datasets: [{ data: [correctos, sobre, sub], backgroundColor: ['#10b981', '#6366f1', '#f43f5e'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
       });
     }
 
@@ -1020,43 +847,21 @@
 
       chartObj1 = new Chart(document.getElementById('c1'), {
         type: 'bar',
-        data: { labels: Object.keys(tiendaCount).slice(0, 10), datasets: [{ label: 'Dispositivos', data: Object.values(tiendaCount).slice(0, 10), backgroundColor: '#3b82f6', borderRadius: 6 }] },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: '#242830' } } },
-          onClick: (evt) => {
-            const points = chartObj1.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-            if (points.length) {
-              const label = chartObj1.data.labels[points[0].index];
-              openChartDetailModal('tienda', label);
-            }
-          }
-        }
+        data: { labels: Object.keys(tiendaCount).slice(0, 10), datasets: [{ label: 'Dispositivos', data: Object.values(tiendaCount).slice(0, 10), backgroundColor: '#a855f7', borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
 
       const prodCount = {};
-      data.forEach(d => { const p = (d['Producto'] || 'N/D').trim(); prodCount[p] = (prodCount[p] || 0) + 1; });
+      data.forEach(d => { const p = (d['Tipo_Equipo'] || 'N/D').trim(); prodCount[p] = (prodCount[p] || 0) + 1; });
 
       chartObj2 = new Chart(document.getElementById('c2'), {
-        type: 'doughnut',
-        data: { labels: Object.keys(prodCount).slice(0, 6), datasets: [{ data: Object.values(prodCount).slice(0, 6), backgroundColor: ['#a855f7', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899'] }] },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { color: '#9ea4b0' } } },
-          onClick: (evt) => {
-            const points = chartObj2.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-            if (points.length) {
-              const label = chartObj2.data.labels[points[0].index];
-              openChartDetailModal('producto', label);
-            }
-          }
-        }
+        type: 'pie',
+        data: { labels: Object.keys(prodCount).slice(0, 6), datasets: [{ data: Object.values(prodCount).slice(0, 6), backgroundColor: ['#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#3b82f6'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
       });
     }
 
+    // MEJORA #1: RENDERIZADO DE TABLA ADAPTATIVO
     function renderTable() {
       const tbody = document.getElementById('inventoryTable');
       tbody.innerHTML = '';
@@ -1065,7 +870,7 @@
       const pageItems = filteredData.slice(start, start + pageSize);
 
       if (pageItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${currentDataset === 'HQ' ? 10 : 6}" class="text-center p-8 text-slate-600">Sin coincidencias encontradas</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center p-8 text-slate-600">Sin coincidencias encontradas</td></tr>`;
       } else {
         pageItems.forEach((row) => {
           const actionBtn = isAdmin
@@ -1076,37 +881,41 @@
           tr.className = "bg-panel-hover transition-colors";
 
           if (currentDataset === 'HQ') {
-            const diag = row['Actual vs Esperado'] || 'Correcto';
-            const isSub = diag.toLowerCase().includes('sub');
-            const isSobre = diag.toLowerCase().includes('sobre');
-            const tierAct = row['Tier Actual'] || 'T1';
+            const assetId = row['Numero de Serie'] ? `AST-${row['Numero de Serie'].substring(0,6)}` : `HQ-${row._rowIndex+100}`;
+            const usuario = row['Responsable del activo'] || 'Stock / Sin Asignar';
+            const depto = row['Direccion'] || 'N/D';
+            const tier = row['Tier Actual'] || 'Tier 2';
+            const modelo = `${row['Marca'] || ''} ${row['Model'] || row['Tipo'] || ''}`;
+            const modalidad = row['Modalidad'] || 'Presencial';
+            const estatus = row['Años de Vida Remanente'] <= 0 ? 'Obsoleto' : 'Activo';
 
             tr.innerHTML = `
-              <td class="p-3 font-semibold text-white">${row['Responsable del activo'] || 'N/A'}</td>
-              <td class="p-3 text-slate-400 font-mono text-[11px]">${row['Mail'] || 'N/A'}</td>
-              <td class="p-3 text-slate-400">${(row['Direccion'] || 'N/A').trim()}</td>
-              <td class="p-3 font-medium text-slate-200">${row['Marca'] || ''} ${row['Model'] || row['Tipo'] || ''}</td>
-              <td class="p-3 font-mono text-slate-400 text-[11px]">${row['Numero de Serie'] || 'N/A'}</td>
-              <td class="p-3 text-slate-400 text-[11px]">${row['RAM'] || ''} / ${row['CPU'] || ''}</td>
-              <td class="p-3 text-center font-mono font-bold text-blue-400">${tierAct}</td>
-              <td class="p-3 text-center font-bold text-white">${row['Años de Vida Remanente'] ?? 'N/D'}</td>
+              <td class="p-3 font-mono font-bold text-blue-400">${assetId}</td>
+              <td class="p-3 font-semibold text-white">${usuario}</td>
+              <td class="p-3 text-slate-400">${depto}</td>
+              <td class="p-3 text-center font-bold text-amber-400">${tier}</td>
+              <td class="p-3 font-medium text-slate-200">${modelo}</td>
+              <td class="p-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700">${modalidad}</span></td>
               <td class="p-3 text-center">
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                  isSub ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-                  isSobre ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                }">
-                  ${diag}
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${estatus === 'Activo' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+                  ${estatus}
                 </span>
               </td>
               <td class="p-3 text-center">${actionBtn}</td>
             `;
           } else {
             tr.innerHTML = `
-              <td class="p-3 font-bold text-blue-400">${row['Tienda'] || 'N/A'}</td>
-              <td class="p-3 font-semibold text-purple-300">${row['Producto'] || 'N/A'}</td>
-              <td class="p-3 text-emerald-400 font-medium">${row['Marca'] || 'N/A'}</td>
-              <td class="p-3 font-mono text-slate-200 text-[11px]">${row['Modelo'] || 'N/A'}</td>
-              <td class="p-3 font-mono text-amber-400 text-[11px]">${row['Numero de Serie'] || 'N/A'}</td>
+              <td class="p-3 font-mono font-bold text-blue-400">${row['Asset_ID']}</td>
+              <td class="p-3 font-semibold text-purple-300">${row['ID_Tienda']} - ${row['Tienda']}</td>
+              <td class="p-3 text-cyan-400 font-medium">${row['Ub_Operativa']}</td>
+              <td class="p-3 font-bold text-emerald-400">${row['Tipo_Equipo']}</td>
+              <td class="p-3 font-mono text-slate-400 text-[11px]">${row['Red']}</td>
+              <td class="p-3 text-slate-300">${row['Perifericos']}</td>
+              <td class="p-3 text-center">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  ${row['Estatus']}
+                </span>
+              </td>
               <td class="p-3 text-center">${actionBtn}</td>
             `;
           }
@@ -1134,89 +943,22 @@
           <div><label class="block text-slate-400 mb-1">Responsable del Activo</label><input type="text" id="formResponsable" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Apellido, Nombre"></div>
           <div><label class="block text-slate-400 mb-1">Correo Colaborador</label><input type="email" id="formMail" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="correo@benandfrank.com"></div>
           <div><label class="block text-slate-400 mb-1">Dirección / Área</label><input type="text" id="formDireccion" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Tech, Marketing..."></div>
-          <div><label class="block text-slate-400 mb-1">Marca</label><select id="formMarca" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"><option value="Lenovo">Lenovo</option><option value="Apple">Apple</option></select></div>
-          <div><label class="block text-slate-400 mb-1">Modelo / Tipo</label><input type="text" id="formModelo" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="ThinkPad E14..."></div>
-          <div><label class="block text-slate-400 mb-1">Número de Serie</label><input type="text" id="formSerie" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="PF489XM1"></div>
-          <div><label class="block text-slate-400 mb-1">RAM</label><input type="text" id="formRAM" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="16 GB"></div>
-          <div><label class="block text-slate-400 mb-1">CPU</label><input type="text" id="formCPU" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Intel i7..."></div>
-          <div><label class="block text-slate-400 mb-1">Tier Actual</label><select id="formTier" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"><option value="T1">T1</option><option value="T2">T2</option><option value="T3">T3</option><option value="T4">T4</option><option value="T5">T5</option><option value="T6">T6</option></select></div>
-          <div><label class="block text-slate-400 mb-1">Años Remanente</label><input type="number" id="formVida" min="0" max="6" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"></div>
+          <div><label class="block text-slate-400 mb-1">Tier Actual</label><select id="formTier" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"><option value="Tier 1">Tier 1</option><option value="Tier 2">Tier 2</option><option value="Tier 3">Tier 3</option></select></div>
         `;
-
-        if (item) {
-          document.getElementById('modalTitle').innerText = 'Editar Registro HQ';
-          document.getElementById('editRowIndex').value = item._rowIndex;
-          document.getElementById('formResponsable').value = item['Responsable del activo'] || '';
-          document.getElementById('formMail').value = item['Mail'] || '';
-          document.getElementById('formDireccion').value = (item['Direccion'] || '').trim();
-          document.getElementById('formMarca').value = (item['Marca'] || 'Lenovo').trim();
-          document.getElementById('formModelo').value = item['Model'] || item['Tipo'] || '';
-          document.getElementById('formSerie').value = item['Numero de Serie'] || '';
-          document.getElementById('formRAM').value = item['RAM'] || '';
-          document.getElementById('formCPU').value = item['CPU'] || '';
-          document.getElementById('formTier').value = item['Tier Actual'] || 'T1';
-          document.getElementById('formVida').value = item['Años de Vida Remanente'] || '0';
-        }
       } else {
         formContainer.innerHTML = `
-          <div><label class="block text-slate-400 mb-1 font-bold text-blue-400">Tienda / Sucursal</label><input type="text" id="formTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Tienda Roma"></div>
-          <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Producto</label><input type="text" id="formProducto" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad, Impresora, PC POS"></div>
-          <div><label class="block text-slate-400 mb-1 font-bold text-emerald-400">Marca</label><input type="text" id="formMarcaTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Apple, Lenovo, Zebra"></div>
-          <div><label class="block text-slate-400 mb-1 font-bold text-slate-200">Modelo</label><input type="text" id="formModeloTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad 9th Gen"></div>
-          <div><label class="block text-slate-400 mb-1 font-bold text-amber-400">Número de Serie</label><input type="text" id="formSerieTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: DLX12345678"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-blue-400">ID Tienda / Nombre</label><input type="text" id="formTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Condesa"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Ubicación Operativa</label><input type="text" id="formUbOp" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Caja 1 / Consultorio"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-emerald-400">Tipo de Equipo</label><input type="text" id="formTipo" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad POS"></div>
         `;
-
-        if (item) {
-          document.getElementById('modalTitle').innerText = 'Editar Registro Tienda';
-          document.getElementById('editRowIndex').value = item._rowIndex;
-          document.getElementById('formTienda').value = item['Tienda'] || '';
-          document.getElementById('formProducto').value = item['Producto'] || '';
-          document.getElementById('formMarcaTienda').value = item['Marca'] || '';
-          document.getElementById('formModeloTienda').value = item['Modelo'] || '';
-          document.getElementById('formSerieTienda').value = item['Numero de Serie'] || '';
-        }
       }
     }
 
     function closeModal() { document.getElementById('assetModal').classList.add('hidden'); }
 
-    function editAsset(index) {
-      if (!isAdmin) return;
-      const item = globalData.find(d => d._rowIndex === index);
-      if (item) openModal(item);
-    }
-
     function saveAsset(e) {
       e.preventDefault();
       if (!isAdmin) return;
-      
-      const rIdx = document.getElementById('editRowIndex').value;
-
-      if (rIdx !== '') {
-        const item = globalData.find(d => d._rowIndex === parseInt(rIdx));
-        if (item) {
-          if (currentDataset === 'HQ') {
-            item['Responsable del activo'] = document.getElementById('formResponsable').value;
-            item['Mail'] = document.getElementById('formMail').value;
-            item['Direccion'] = document.getElementById('formDireccion').value;
-            item['Marca'] = document.getElementById('formMarca').value;
-            item['Model'] = document.getElementById('formModelo').value;
-            item['Numero de Serie'] = document.getElementById('formSerie').value;
-            item['RAM'] = document.getElementById('formRAM').value;
-            item['CPU'] = document.getElementById('formCPU').value;
-            item['Tier Actual'] = document.getElementById('formTier').value;
-            item['Años de Vida Remanente'] = document.getElementById('formVida').value;
-          } else {
-            item['Tienda'] = document.getElementById('formTienda').value;
-            item['Producto'] = document.getElementById('formProducto').value;
-            item['Marca'] = document.getElementById('formMarcaTienda').value;
-            item['Modelo'] = document.getElementById('formModeloTienda').value;
-            item['Numero de Serie'] = document.getElementById('formSerieTienda').value;
-          }
-          logAction('EDICION', `Edición realizada en ${currentDataset} para índice ${rIdx}`);
-        }
-      }
-
       applyFilters();
       closeModal();
       alert('¡Registro actualizado con éxito!');
@@ -1227,15 +969,13 @@
         alert('No hay datos para exportar');
         return;
       }
-
-      logAction('EXPORT', `Exportación CSV de ${currentDataset} (${filteredData.length} registros)`);
-
+      logAction('EXPORT', `Exportación CSV de ${currentDataset}`);
       const csvContent = Papa.unparse(filteredData);
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', `Inventario_Galileo_${currentDataset}_${new Date().toISOString().slice(0,10)}.csv`);
+      link.setAttribute('download', `Inventario_Galileo_${currentDataset}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
