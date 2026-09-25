@@ -16,19 +16,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
   <style>
-    body {
-      background-color: #0f1115;
-      color: #9ea4b0;
-    }
-    .bg-panel {
-      background-color: #171a1f;
-    }
-    .bg-panel-hover:hover {
-      background-color: #1f232b;
-    }
-    .border-rocker {
-      border-color: #242830;
-    }
+    body { background-color: #0f1115; color: #9ea4b0; }
+    .bg-panel { background-color: #171a1f; }
+    .bg-panel-hover:hover { background-color: #1f232b; }
+    .border-rocker { border-color: #242830; }
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: #0f1115; }
     ::-webkit-scrollbar-thumb { background: #2b303c; border-radius: 4px; }
@@ -89,7 +80,6 @@
       </div>
 
       <nav class="p-4 space-y-2">
-        <!-- SELECTOR DE INVENTARIOS -->
         <div class="bg-[#0f1115] p-2.5 rounded-xl border border-rocker space-y-1.5 mb-3">
           <label class="block text-[10px] font-bold text-blue-400 uppercase tracking-wider">Origen de Datos</label>
           <select id="datasetSelector" onchange="switchDataset(this.value)" class="w-full bg-[#171a1f] border border-rocker text-slate-200 px-2 py-1.5 rounded-lg focus:outline-none focus:border-blue-500 text-xs font-semibold">
@@ -256,7 +246,6 @@
   </div>
 
   <script>
-    // URLS CSV ORIGEN
     const SHEET_HQ_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6O7VuFl6hhj6TzvCYlHF5mVq6qQz49oTsFurFP7yINJzTjNddurEHG_GQCVsy4cqEO8ntD_m1WYi-/pub?gid=1154664784&single=true&output=csv';
     const SHEET_TIENDAS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVj5iUE5wOYEvbzeIKp1nIJwQ9gYbAPqK9KGid2hmsVxjHeL4OclmpwJDUoaKYJSCsN6K3IgCHHuQl/pub?gid=1184661297&single=true&output=csv';
 
@@ -355,7 +344,7 @@
         header: false,
         skipEmptyLines: true,
         complete: function(results) {
-          const rawRows = results.data;
+          const rawRows = results.data || [];
           
           if (currentDataset === 'HQ') {
             parseHQData(rawRows);
@@ -373,7 +362,7 @@
       let headerIndex = rawRows.findIndex(row => row.some(cell => String(cell).includes('Numero de Serie') || String(cell).includes('Responsable')));
       if (headerIndex === -1) headerIndex = 9;
 
-      const headers = rawRows[headerIndex].map(h => String(h).trim());
+      const headers = (rawRows[headerIndex] || []).map(h => String(h).trim());
       const dataRows = rawRows.slice(headerIndex + 1);
 
       globalData = dataRows.map((row, idx) => {
@@ -385,25 +374,32 @@
       }).filter(item => item['Mail'] || item['Responsable del activo'] || item['Numero de Serie']);
     }
 
-    // Normalizador Exclusivo Tiendas
+    // Normalizador Ultraligero y Seguro para Tiendas (Sin Bloqueos)
     function parseTiendasData(rawRows) {
-      globalData = rawRows.map((row, idx) => {
-        const rowStr = row.join(' ').trim();
-        if (!rowStr) return null;
+      const parsed = [];
+      for (let i = 0; i < rawRows.length; i++) {
+        const row = rawRows[i];
+        if (!row || row.length === 0) continue;
 
-        const tienda = String(row[0] || row[1] || 'Tienda ' + (idx + 1)).trim();
-        const producto = String(row[2] || row[3] || 'Dispositivo Retail').trim();
-        const marca = String(row[4] || row[5] || (rowStr.toLowerCase().includes('mac') || rowStr.toLowerCase().includes('ipad') ? 'Apple' : 'Lenovo')).trim();
-        const modelo = String(row[6] || row[7] || rowStr.substring(0, 20)).trim();
+        const col0 = String(row[0] || '').trim();
+        const col1 = String(row[1] || '').trim();
+        const col2 = String(row[2] || '').trim();
+        const col3 = String(row[3] || '').trim();
 
-        return {
-          _rowIndex: idx,
-          'Tienda': tienda,
-          'Producto': producto,
-          'Marca': marca,
-          'Modelo': modelo
-        };
-      }).filter(item => item && item['Tienda'] && !item['Tienda'].toLowerCase().includes('tienda'));
+        if (!col0 && !col1 && !col2) continue;
+
+        // Omitir posibles títulos de sección o encabezados
+        if (col0.toLowerCase().includes('tienda') && col1.toLowerCase().includes('producto')) continue;
+
+        parsed.push({
+          _rowIndex: i,
+          'Tienda': col0 || 'Tienda ' + (i + 1),
+          'Producto': col1 || 'Dispositivo Retail',
+          'Marca': col2 || (col3.toLowerCase().includes('mac') || col3.toLowerCase().includes('ipad') ? 'Apple' : 'Lenovo'),
+          'Modelo': col3 || 'Estándar'
+        });
+      }
+      globalData = parsed;
     }
 
     function renderFilterControls() {
@@ -538,7 +534,7 @@
     }
 
     function applyFilters() {
-      const searchGlobal = document.getElementById('searchInput').value.toLowerCase();
+      const searchGlobal = (document.getElementById('searchInput')?.value || '').toLowerCase();
 
       if (currentDataset === 'HQ') {
         const filterNombre = (document.getElementById('filterNombre')?.value || '').toLowerCase();
@@ -702,7 +698,6 @@
           renderModeloHQCharts(data);
         }
       } else {
-        // DASHBOARD EXCLUSIVO TIENDAS
         container.innerHTML = `
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
