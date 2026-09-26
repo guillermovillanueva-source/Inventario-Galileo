@@ -119,16 +119,16 @@
           </button>
         </div>
 
-        <div class="pt-3 px-3 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Acciones</div>
+        <div class="pt-3 px-3 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Acciones Captura</div>
+
+        <button id="sidebarBtnNuevo" onclick="openModal('EQUIPO')" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition hidden">
+          <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          <span>Capturar Registro</span>
+        </button>
 
         <button onclick="exportCSV()" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
           <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
           <span>Exportar Datos</span>
-        </button>
-
-        <button id="sidebarBtnNuevo" onclick="openModal()" class="w-full items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition hidden">
-          <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-          <span>Nuevo Equipo</span>
         </button>
       </nav>
     </div>
@@ -190,9 +190,13 @@
       <div id="tableSection" class="bg-panel rounded-xl border border-rocker shadow-xl overflow-hidden">
         <div class="p-4 border-b border-rocker flex justify-between items-center">
           <h2 id="tableTitleDisplay" class="text-sm font-bold text-white">Listado Completo - HQ Corporativo</h2>
-          <button id="mainBtnNuevo" onclick="openModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-3 py-1.5 rounded-lg text-xs transition hidden">
-            + Nuevo Equipo
-          </button>
+          
+          <!-- BOTÓN DE CAPTURA RÁPIDA -->
+          <div class="flex gap-2">
+            <button id="mainBtnNuevo" onclick="openModal('EQUIPO')" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-3 py-1.5 rounded-lg text-xs transition hidden">
+              + Capturar
+            </button>
+          </div>
         </div>
 
         <div class="overflow-x-auto">
@@ -245,20 +249,37 @@
     </div>
   </div>
 
-  <!-- Modal para Altas / Edición -->
+  <!-- MODAL MULTI-PLANTILLA DE CAPTURA (EQUIPO / USUARIO / TIENDA) -->
   <div id="assetModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
     <div class="bg-panel border border-rocker rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col">
-      <div class="p-4 border-b border-rocker flex justify-between items-center bg-[#0f1115]">
-        <h3 id="modalTitle" class="font-bold text-sm text-white">Registrar / Editar Equipo</h3>
-        <button onclick="closeModal()" class="text-slate-500 hover:text-white">✕</button>
+      
+      <!-- HEADER DEL MODAL CON SELECTOR DE PLANTILLA -->
+      <div class="p-4 border-b border-rocker flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#0f1115]">
+        <div>
+          <h3 id="modalTitle" class="font-bold text-sm text-white">Capturar Nuevo Registro</h3>
+          <p class="text-[10px] text-slate-400">Selecciona el tipo de plantilla para completar la información</p>
+        </div>
+        
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <select id="templateTypeSelector" onchange="renderModalForm(this.value)" class="bg-[#171a1f] border border-blue-500/40 text-blue-400 px-2.5 py-1.5 rounded-lg focus:outline-none text-xs font-bold">
+            <option value="EQUIPO">💻 Nuevo Equipo</option>
+            <option value="TIENDA">🏪 Nueva Tienda / Sede</option>
+            <option value="USUARIO">👤 Nuevo Usuario</option>
+          </select>
+          <button onclick="closeModal()" class="text-slate-500 hover:text-white font-bold px-2 py-1">✕</button>
+        </div>
       </div>
 
       <form id="assetForm" onsubmit="saveAsset(event)" class="p-6 space-y-4 text-xs max-h-[80vh] overflow-y-auto">
         <input type="hidden" id="editRowIndex" />
-        <div id="modalFormContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+        
+        <div id="modalFormContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Formulario dinámico según la plantilla seleccionada -->
+        </div>
+
         <div class="pt-4 border-t border-rocker flex justify-end gap-3">
           <button type="button" onclick="closeModal()" class="px-4 py-2 border border-rocker rounded-lg text-slate-400 hover:text-white">Cancelar</button>
-          <button type="submit" id="btnSave" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition">Guardar Cambios</button>
+          <button type="submit" id="btnSave" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition shadow-lg shadow-blue-600/20">Guardar Registro</button>
         </div>
       </form>
     </div>
@@ -487,7 +508,6 @@
       }
     }
 
-    // ENCABEZADOS DE LA TABLA (SEPARACIÓN DE ID TIENDA Y NOMBRE TIENDA)
     function renderTableHeader() {
       const head = document.getElementById('tableHeaderHead');
       if (currentDataset === 'HQ') {
@@ -984,7 +1004,6 @@
       });
     }
 
-    // RENDERIZADO DE FILAS EN LA TABLA PRINCIPAL
     function renderTable() {
       const tbody = document.getElementById('inventoryTable');
       tbody.innerHTML = '';
@@ -1057,26 +1076,58 @@
     function prevPage() { if (currentPage > 1) { currentPage--; renderTable(); } }
     function nextPage() { if (currentPage * pageSize < filteredData.length) { currentPage++; renderTable(); } }
 
-    function openModal(item = null) {
-      if (!isAdmin) return;
-      document.getElementById('assetModal').classList.remove('hidden');
+    // RENDERIZADO DINÁMICO DE LAS 3 PLANTILLAS DENTRO DEL MODAL
+    function renderModalForm(templateType) {
       const formContainer = document.getElementById('modalFormContainer');
 
-      if (currentDataset === 'HQ') {
+      if (templateType === 'TIENDA') {
         formContainer.innerHTML = `
-          <div><label class="block text-slate-400 mb-1">Responsable del Activo</label><input type="text" id="formResponsable" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Apellido, Nombre"></div>
-          <div><label class="block text-slate-400 mb-1">Correo Colaborador</label><input type="email" id="formMail" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="correo@benandfrank.com"></div>
-          <div><label class="block text-slate-400 mb-1">Dirección / Área</label><input type="text" id="formDireccion" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Tech, Marketing..."></div>
-          <div><label class="block text-slate-400 mb-1">Tier Actual</label><select id="formTier" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"><option value="Tier 1">Tier 1</option><option value="Tier 2">Tier 2</option><option value="Tier 3">Tier 3</option></select></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-indigo-400">ID / Código Tienda</label><input type="text" id="formIDTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: TDA-045"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Nombre de la Sede</label><input type="text" id="formTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Tienda Condesa"></div>
+          <div><label class="block text-slate-400 mb-1">Tipo de Entorno</label><select id="formTipoSede" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"><option value="Tienda">Tienda / Retail</option><option value="HQ">HQ / Corporativo</option><option value="CEDIS">CEDIS / Almacén</option><option value="Lab">Laboratorio</option></select></div>
+          <div><label class="block text-slate-400 mb-1">Centro de Costos</label><input type="text" id="formCC" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: CC-RETAIL-045"></div>
+          <div class="sm:col-span-2"><label class="block text-slate-400 mb-1">Dirección Completa</label><input type="text" id="formDireccionSede" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Calle, Número, Colonia, Estado"></div>
+          <div><label class="block text-slate-400 mb-1">Responsable / Gerente</label><input type="text" id="formGerente" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Nombre del Gerente"></div>
+          <div><label class="block text-slate-400 mb-1">Estatus Operativo</label><select id="formEstatusSede" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"><option value="Activa">Activa</option><option value="Apertura">En Apertura</option><option value="Cerrada">Cerrada</option></select></div>
         `;
-      } else {
+      } else if (templateType === 'USUARIO') {
         formContainer.innerHTML = `
-          <div><label class="block text-slate-400 mb-1 font-bold text-indigo-400">ID Tienda</label><input type="text" id="formIDTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: TDA-001"></div>
-          <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Nombre Tienda</label><input type="text" id="formTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Condesa"></div>
-          <div><label class="block text-slate-400 mb-1 font-bold text-cyan-400">Ubicación Operativa</label><input type="text" id="formUbOp" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Caja 1 / Consultorio"></div>
-          <div><label class="block text-slate-400 mb-1 font-bold text-emerald-400">Tipo de Equipo</label><input type="text" id="formTipo" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad POS"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-blue-400">ID / No. Empleado</label><input type="text" id="formIDEmpleado" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: EMP-1234"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-white">Nombre Completo</label><input type="text" id="formNombreUser" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Juan Pérez"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Correo Corporativo</label><input type="email" id="formMailUser" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="juan@benandfrank.com"></div>
+          <div><label class="block text-slate-400 mb-1">Unidad de Negocio (BU)</label><select id="formBUUser" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"><option value="Retail">Retail</option><option value="HQ">HQ</option><option value="Tech">Tech</option><option value="Operaciones">Operaciones</option></select></div>
+          <div><label class="block text-slate-400 mb-1">Departamento / Área</label><input type="text" id="formDeptoUser" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Finanzas, Tiendas, HR..."></div>
+          <div><label class="block text-slate-400 mb-1">Puesto</label><input type="text" id="formPuestoUser" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Analista, Gerente..."></div>
+          <div class="sm:col-span-2"><label class="block text-slate-400 mb-1">Modalidad de Trabajo</label><select id="formModalidadUser" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"><option value="Presencial">Presencial</option><option value="Híbrido">Híbrido</option><option value="Remoto">Remoto (Home Office)</option></select></div>
         `;
+      } else { // EQUIPO
+        if (currentDataset === 'HQ') {
+          formContainer.innerHTML = `
+            <div><label class="block text-slate-400 mb-1 font-bold text-blue-400">Asset ID / Serie</label><input type="text" id="formSerie" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: LAP-00123 / C02XXX"></div>
+            <div><label class="block text-slate-400 mb-1">Usuario Asignado</label><input type="text" id="formResponsable" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Apellido, Nombre"></div>
+            <div><label class="block text-slate-400 mb-1">Correo Colaborador</label><input type="email" id="formMail" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="correo@benandfrank.com"></div>
+            <div><label class="block text-slate-400 mb-1">Dirección / Área</label><input type="text" id="formDireccion" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Tech, Marketing..."></div>
+            <div><label class="block text-slate-400 mb-1">Marca / Modelo</label><input type="text" id="formModelo" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Apple MacBook Air M2 / Lenovo T14"></div>
+            <div><label class="block text-slate-400 mb-1">Tier Asignado</label><select id="formTier" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"><option value="Tier 1">Tier 1 (Alto Rendimiento)</option><option value="Tier 2" selected>Tier 2 (Estándar)</option><option value="Tier 3">Tier 3 (Operativo)</option></select></div>
+          `;
+        } else {
+          formContainer.innerHTML = `
+            <div><label class="block text-slate-400 mb-1 font-bold text-blue-400">Asset ID / Serie</label><input type="text" id="formAssetID" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: AST-105"></div>
+            <div><label class="block text-slate-400 mb-1 font-bold text-indigo-400">ID Tienda</label><input type="text" id="formIDTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: TDA-001"></div>
+            <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Nombre Tienda</label><input type="text" id="formTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Condesa"></div>
+            <div><label class="block text-slate-400 mb-1 font-bold text-cyan-400">Ubicación Operativa</label><input type="text" id="formUbOp" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Caja 1 / Consultorio"></div>
+            <div><label class="block text-slate-400 mb-1 font-bold text-emerald-400">Tipo de Equipo</label><input type="text" id="formTipo" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad POS / Impresora"></div>
+            <div><label class="block text-slate-400 mb-1">Red / Conectividad</label><input type="text" id="formRed" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="MAC / IP / Wi-Fi"></div>
+          `;
+        }
       }
+    }
+
+    function openModal(defaultType = 'EQUIPO') {
+      if (!isAdmin) return;
+      document.getElementById('assetModal').classList.remove('hidden');
+      document.getElementById('templateTypeSelector').value = defaultType;
+      renderModalForm(defaultType);
     }
 
     function closeModal() { document.getElementById('assetModal').classList.add('hidden'); }
@@ -1084,9 +1135,13 @@
     function saveAsset(e) {
       e.preventDefault();
       if (!isAdmin) return;
+      
+      const type = document.getElementById('templateTypeSelector').value;
+      
+      logAction('ALTA_REGISTRO', `Nuevo registro capturado usando la plantilla: ${type}`);
       applyFilters();
       closeModal();
-      alert('¡Registro actualizado con éxito!');
+      alert(`¡Registro de tipo ${type} capturado con éxito!`);
     }
 
     function exportCSV() {
