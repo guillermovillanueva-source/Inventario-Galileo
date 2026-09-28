@@ -122,7 +122,7 @@
 
         <button onclick="switchView('modelo')" id="nav-modelo" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
           <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m14-6h2m-2 6h2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
-          <span>Óptica por Modelo</span>
+          <span id="navModeloText">Óptica por Modelo</span>
         </button>
 
         <div id="adminNavSection" class="hidden">
@@ -191,7 +191,7 @@
     <main class="p-6 space-y-6 max-w-[1600px] w-full mx-auto">
 
       <!-- TARJETAS KPIS DINÁMICAS -->
-      <div id="kpiContainerGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+      <div id="kpiContainerGrid" class="grid grid-cols-1 sm:grid-cols-4 gap-4"></div>
 
       <div id="viewContainer" class="space-y-6"></div>
 
@@ -303,7 +303,9 @@
   <script>
     const SHEET_HQ_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6O7VuFl6hhj6TzvCYlHF5mVq6qQz49oTsFurFP7yINJzTjNddurEHG_GQCVsy4cqEO8ntD_m1WYi-/pub?gid=1154664784&single=true&output=csv';
     const SHEET_TIENDAS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVj5iUE5wOYEvbzeIKp1nIJwQ9gYbAPqK9KGid2hmsVxjHeL4OclmpwJDUoaKYJSCsN6K3IgCHHuQl/pub?gid=1184661297&single=true&output=csv';
-    const SHEET_CELULARES_URL = ''; 
+    
+    // URL exacta publicada del Sheets de Celulares:
+    const SHEET_CELULARES_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJCZJ-BeOcKWvaJXYWybMCABW_1doHHhcJ2xBB267TSIm2560_B9nWapewC6CcLP1bnS-bWVNCPMsH/pub?gid=0&single=true&output=csv'; 
 
     const ADMIN_EMAILS = ['guillermo.villanueva@benandfrank.com', 'edgar.rodriguez@benandfrank.com'];
     const ADMIN_BU = 'Tech';
@@ -328,7 +330,6 @@
       if (savedLogs) auditLogs = JSON.parse(savedLogs);
     });
 
-    // Decodificador de tokens JWT devueltos por Google GIS
     function parseJwt(token) {
       try {
         const base64Url = token.split('.')[1];
@@ -340,7 +341,6 @@
       }
     }
 
-    // Callback activado al autenticarse con Google
     function handleGoogleCredentialResponse(response) {
       const payload = parseJwt(response.credential);
       if (!payload) {
@@ -417,17 +417,20 @@
       currentDataset = datasetKey;
       let title = 'Listado Completo - HQ Corporativo';
       let navArea = 'Óptica por Área';
+      let navModelo = 'Óptica por Modelo';
 
       if (datasetKey === 'TIENDAS') {
         title = 'Listado Completo - Tiendas / Retail';
         navArea = 'Óptica por Tienda';
       } else if (datasetKey === 'CELULARES') {
         title = 'Listado Completo - Telefonía Celular';
-        navArea = 'Óptica por Proveedor';
+        navArea = 'Volumen y Costos x Área';
+        navModelo = 'Óptica por Usuario';
       }
       
       document.getElementById('tableTitleDisplay').innerText = title;
       document.getElementById('navAreaText').innerText = navArea;
+      document.getElementById('navModeloText').innerText = navModelo;
       document.getElementById('datasetSelector').value = datasetKey;
 
       renderFilterControls();
@@ -530,11 +533,12 @@
       }).filter(item => item['Tienda'] && item['Tienda'] !== 'Tienda Sin Nombre');
     }
 
+    // Mapeo adaptado exactamente a tus columnas de Google Sheets (Número, Colaborador, Mail, Área, Plan, Costo, Tipo, Estatus)
     function parseCelularesData(rawRows) {
       let headerIndex = rawRows.findIndex(row => row.some(cell => 
         String(cell).toLowerCase().includes('numero') || 
-        String(cell).toLowerCase().includes('proveedor') || 
-        String(cell).toLowerCase().includes('linea')
+        String(cell).toLowerCase().includes('colaborador') || 
+        String(cell).toLowerCase().includes('mail')
       ));
 
       if (headerIndex === -1) headerIndex = 0;
@@ -548,19 +552,24 @@
           rawObj[h] = row[i] ? String(row[i]).trim() : '';
         });
 
+        // Extracción limpia de la columna Costo/Renta
+        let costoRaw = rawObj['Costo'] || rawObj['Renta'] || rawObj['Pago Mensual'] || '$0';
+
         return {
           _rowIndex: idx,
           'Numero': rawObj['Número'] || rawObj['Numero'] || rawObj['Línea'] || 'N/D',
-          'Proveedor': rawObj['Proveedor'] || rawObj['Compañía'] || 'Telcel',
-          'PagoMensual': rawObj['Pago Mensual'] || rawObj['Costo'] || '$0',
-          'Marca': rawObj['Marca'] || 'Apple',
-          'Modelo': rawObj['Modelo'] || 'iPhone 13',
-          'IMEI': rawObj['IMEI'] || rawObj['Serie'] || `IMEI-${idx+1000}`,
-          'Usuario': rawObj['Usuario'] || rawObj['Responsable'] || 'Sin Asignar',
-          'Plan': rawObj['Plan'] || 'Empresarial V3',
-          'Estatus': rawObj['Estatus'] || 'Activo'
+          'Usuario': rawObj['Colaborador'] || rawObj['Usuario'] || 'Sin asignar',
+          'Mail': rawObj['Mail'] || 'N/D',
+          'Area': rawObj['Área'] || rawObj['Area'] || rawObj['Departamento'] || 'General',
+          'Plan': rawObj['Plan'] || 'Plan Renta',
+          'PagoMensual': costoRaw,
+          'TipoSim': rawObj['Tipo'] || rawObj['Chip'] || 'SIM',
+          'Estatus': rawObj['Estatus'] || 'Activo',
+          'Marca': rawObj['Marca'] || 'Celular',
+          'Modelo': rawObj['Modelo'] || 'Estándar',
+          'IMEI': rawObj['IMEI'] || `IMEI-${idx+1000}`
         };
-      });
+      }).filter(item => item['Numero'] && item['Numero'] !== 'N/D');
     }
 
     function renderFilterControls() {
@@ -600,15 +609,17 @@
         document.getElementById('filterEstatus').addEventListener('change', applyFilters);
         document.getElementById('filterModeloText').addEventListener('input', applyFilters);
       } else if (currentDataset === 'CELULARES') {
-        container.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3";
+        container.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3";
         container.innerHTML = `
-          <select id="filterProveedor" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">📡 Todos los Proveedores</option></select>
-          <select id="filterMarcaCel" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">📱 Todas las Marcas</option></select>
-          <input type="text" id="filterNumCel" placeholder="📞 Buscar por Número / IMEI..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
-          <input type="text" id="filterUsuarioCel" placeholder="👤 Buscar por Usuario..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
+          <select id="filterAreaCel" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">🏢 Todas las Áreas</option></select>
+          <select id="filterPlanCel" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">📋 Todos los Planes</option></select>
+          <select id="filterTipoSim" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">📲 SIM / eSIM</option></select>
+          <input type="text" id="filterNumCel" placeholder="📞 Buscar por Número / Mail..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
+          <input type="text" id="filterUsuarioCel" placeholder="👤 Buscar por Colaborador..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
         `;
-        document.getElementById('filterProveedor').addEventListener('change', applyFilters);
-        document.getElementById('filterMarcaCel').addEventListener('change', applyFilters);
+        document.getElementById('filterAreaCel').addEventListener('change', applyFilters);
+        document.getElementById('filterPlanCel').addEventListener('change', applyFilters);
+        document.getElementById('filterTipoSim').addEventListener('change', applyFilters);
         document.getElementById('filterNumCel').addEventListener('input', applyFilters);
         document.getElementById('filterUsuarioCel').addEventListener('input', applyFilters);
       }
@@ -646,13 +657,13 @@
       } else if (currentDataset === 'CELULARES') {
         head.innerHTML = `
           <tr>
-            <th class="p-3 font-bold text-blue-400">Número de Línea</th>
-            <th class="p-3 font-bold text-purple-400">Proveedor</th>
-            <th class="p-3 font-bold text-emerald-400">Pago Mensual</th>
-            <th class="p-3">Marca / Modelo</th>
-            <th class="p-3 font-mono">IMEI / Serie</th>
-            <th class="p-3">Usuario Asignado</th>
-            <th class="p-3">Plan Contratado</th>
+            <th class="p-3 font-bold text-blue-400">Número / Línea</th>
+            <th class="p-3 font-bold text-indigo-400">Área / Depto</th>
+            <th class="p-3 font-bold text-white">Colaborador</th>
+            <th class="p-3 font-mono text-slate-400">Mail</th>
+            <th class="p-3 font-bold text-purple-300">Plan Contratado</th>
+            <th class="p-3 font-bold text-emerald-400">Costo Mensual</th>
+            <th class="p-3 text-center">Tipo Chip</th>
             <th class="p-3 text-center">Estatus</th>
             <th class="p-3 text-center">Acción</th>
           </tr>
@@ -670,6 +681,7 @@
         const renovacion = data.filter(d => parseInt(d['Años de Vida Remanente'] || '0') <= 0).length;
         const pctRenov = Math.round((renovacion / total) * 100);
 
+        kpiContainer.className = "grid grid-cols-1 sm:grid-cols-3 gap-4";
         kpiContainer.innerHTML = `
           <div class="bg-panel p-4 rounded-xl border border-rocker shadow-lg flex items-center justify-between">
             <div>
@@ -698,6 +710,7 @@
         const posDisponibles = data.filter(d => (d['Tipo_Equipo'] || '').toLowerCase().includes('pos') || (d['Tipo_Equipo'] || '').toLowerCase().includes('caja')).length;
         const alertas = data.filter(d => (d['Estatus'] || '').toLowerCase().includes('soporte') || (d['Estatus'] || '').toLowerCase().includes('falla')).length;
 
+        kpiContainer.className = "grid grid-cols-1 sm:grid-cols-3 gap-4";
         kpiContainer.innerHTML = `
           <div class="bg-panel p-4 rounded-xl border border-rocker shadow-lg flex items-center justify-between">
             <div>
@@ -723,33 +736,45 @@
         `;
       } else if (currentDataset === 'CELULARES') {
         const totalLienas = data.length;
-        const asignadas = data.filter(d => d['Usuario'] && d['Usuario'] !== 'Sin Asignar').length;
+        const asignadas = data.filter(d => d['Usuario'] && d['Usuario'].toLowerCase() !== 'sin asignar').length;
+        const areasCount = new Set(data.map(d => d['Area'])).size;
+        
         const gastoTotal = data.reduce((acc, curr) => {
           const val = parseFloat((curr['PagoMensual'] || '0').replace(/[^0-9.-]+/g,"")) || 0;
           return acc + val;
         }, 0);
+        
+        const costoPromedio = totalLienas > 0 ? (gastoTotal / totalLienas) : 0;
 
+        kpiContainer.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4";
         kpiContainer.innerHTML = `
           <div class="bg-panel p-4 rounded-xl border border-rocker shadow-lg flex items-center justify-between">
             <div>
-              <p class="text-[10px] font-bold text-slate-500 uppercase">Total Líneas Celulares</p>
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Volumen Total de Líneas</p>
               <h3 class="text-xl font-bold text-blue-400 mt-1">${totalLienas} <span class="text-xs text-slate-500 font-normal">Líneas</span></h3>
             </div>
             <div class="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold border border-blue-500/20">📱</div>
           </div>
           <div class="bg-panel p-4 rounded-xl border border-rocker shadow-lg flex items-center justify-between">
             <div>
-              <p class="text-[10px] font-bold text-slate-500 uppercase">Líneas Asignadas</p>
-              <h3 class="text-xl font-bold text-emerald-400 mt-1">${asignadas} <span class="text-xs text-slate-500 font-normal">/ ${totalLienas}</span></h3>
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Líneas Asignadas / Áreas</p>
+              <h3 class="text-xl font-bold text-purple-400 mt-1">${asignadas} <span class="text-xs text-slate-500 font-normal">(${areasCount} Áreas)</span></h3>
             </div>
-            <div class="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold border border-emerald-500/20">👥</div>
+            <div class="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold border border-purple-500/20">👥</div>
           </div>
           <div class="bg-panel p-4 rounded-xl border border-rocker shadow-lg flex items-center justify-between">
             <div>
-              <p class="text-[10px] font-bold text-slate-500 uppercase">Gasto Mensual Estimado</p>
-              <h3 class="text-xl font-bold text-amber-400 mt-1">$${gastoTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</h3>
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Gasto Mensual Total</p>
+              <h3 class="text-xl font-bold text-emerald-400 mt-1">$${gastoTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</h3>
             </div>
-            <div class="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold border border-amber-500/20">💵</div>
+            <div class="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold border border-emerald-500/20">💵</div>
+          </div>
+          <div class="bg-panel p-4 rounded-xl border border-rocker shadow-lg flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Costo Prom. x Línea</p>
+              <h3 class="text-xl font-bold text-cyan-400 mt-1">$${costoPromedio.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</h3>
+            </div>
+            <div class="w-9 h-9 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold border border-cyan-500/20">📊</div>
           </div>
         `;
       }
@@ -787,19 +812,26 @@
           productos.forEach(p => selProducto.innerHTML += `<option value="${p}">${p}</option>`);
         }
       } else if (currentDataset === 'CELULARES') {
-        const provs = [...new Set(data.map(d => (d['Proveedor'] || '').trim()).filter(Boolean))].sort();
-        const marcas = [...new Set(data.map(d => (d['Marca'] || '').trim()).filter(Boolean))].sort();
+        const areas = [...new Set(data.map(d => (d['Area'] || '').trim()).filter(Boolean))].sort();
+        const planes = [...new Set(data.map(d => (d['Plan'] || '').trim()).filter(Boolean))].sort();
+        const chips = [...new Set(data.map(d => (d['TipoSim'] || '').trim()).filter(Boolean))].sort();
 
-        const selProv = document.getElementById('filterProveedor');
-        if (selProv) {
-          selProv.innerHTML = '<option value="">📡 Todos los Proveedores</option>';
-          provs.forEach(p => selProv.innerHTML += `<option value="${p}">${p}</option>`);
+        const selArea = document.getElementById('filterAreaCel');
+        if (selArea) {
+          selArea.innerHTML = '<option value="">🏢 Todas las Áreas</option>';
+          areas.forEach(a => selArea.innerHTML += `<option value="${a}">${a}</option>`);
         }
 
-        const selMarca = document.getElementById('filterMarcaCel');
-        if (selMarca) {
-          selMarca.innerHTML = '<option value="">📱 Todas las Marcas</option>';
-          marcas.forEach(m => selMarca.innerHTML += `<option value="${m}">${m}</option>`);
+        const selPlan = document.getElementById('filterPlanCel');
+        if (selPlan) {
+          selPlan.innerHTML = '<option value="">📋 Todos los Planes</option>';
+          planes.forEach(p => selPlan.innerHTML += `<option value="${p}">${p}</option>`);
+        }
+
+        const selChip = document.getElementById('filterTipoSim');
+        if (selChip) {
+          selChip.innerHTML = '<option value="">📲 SIM / eSIM</option>';
+          chips.forEach(c => selChip.innerHTML += `<option value="${c}">${c}</option>`);
         }
       }
     }
@@ -881,31 +913,31 @@
           </tr>
         `).join('');
       } else if (currentDataset === 'CELULARES') {
-        if (categoryType === 'proveedor') {
-          matchedItems = globalData.filter(d => (d['Proveedor'] || 'N/D').trim() === labelValue);
-        } else if (categoryType === 'marca') {
-          matchedItems = globalData.filter(d => (d['Marca'] || 'N/D').trim() === labelValue);
+        if (categoryType === 'area') {
+          matchedItems = globalData.filter(d => (d['Area'] || 'General').trim() === labelValue);
+        } else if (categoryType === 'plan') {
+          matchedItems = globalData.filter(d => (d['Plan'] || 'N/D').trim() === labelValue);
         }
 
         headerHead.innerHTML = `
           <tr>
             <th class="p-3 font-bold text-blue-400">Número</th>
-            <th class="p-3 font-bold text-purple-400">Proveedor</th>
-            <th class="p-3 font-bold text-emerald-400">Pago Mensual</th>
-            <th class="p-3">Modelo</th>
-            <th class="p-3 font-mono">IMEI</th>
-            <th class="p-3">Usuario</th>
+            <th class="p-3 font-bold text-indigo-400">Área</th>
+            <th class="p-3 font-bold text-white">Colaborador</th>
+            <th class="p-3 text-slate-400 font-mono">Mail</th>
+            <th class="p-3 font-bold text-emerald-400">Costo Mensual</th>
+            <th class="p-3">Plan</th>
           </tr>
         `;
 
         tableBody.innerHTML = matchedItems.map(row => `
           <tr class="bg-panel-hover transition-colors">
             <td class="p-3 font-bold text-blue-400 font-mono">${row['Numero']}</td>
-            <td class="p-3 font-semibold text-purple-300">${row['Proveedor']}</td>
-            <td class="p-3 text-emerald-400 font-bold">${row['PagoMensual']}</td>
-            <td class="p-3 text-slate-200">${row['Marca']} ${row['Modelo']}</td>
-            <td class="p-3 font-mono text-slate-400 text-[11px]">${row['IMEI']}</td>
+            <td class="p-3 font-semibold text-indigo-300">${row['Area']}</td>
             <td class="p-3 text-white font-medium">${row['Usuario']}</td>
+            <td class="p-3 text-slate-400 font-mono text-[11px]">${row['Mail']}</td>
+            <td class="p-3 text-emerald-400 font-bold">${row['PagoMensual']}</td>
+            <td class="p-3 text-slate-200">${row['Plan']}</td>
           </tr>
         `).join('');
       }
@@ -1000,25 +1032,28 @@
           return matchesGlobal && matchesTienda && matchesProducto && matchesEstatus && matchesModelo;
         });
       } else if (currentDataset === 'CELULARES') {
-        const proveedor = document.getElementById('filterProveedor')?.value || '';
-        const marca = document.getElementById('filterMarcaCel')?.value || '';
+        const areaCel = document.getElementById('filterAreaCel')?.value || '';
+        const planCel = document.getElementById('filterPlanCel')?.value || '';
+        const tipoSim = document.getElementById('filterTipoSim')?.value || '';
         const numCel = (document.getElementById('filterNumCel')?.value || '').toLowerCase();
         const userCel = (document.getElementById('filterUsuarioCel')?.value || '').toLowerCase();
 
         filteredData = globalData.filter(d => {
-          const itemProv = (d['Proveedor'] || '').trim();
-          const itemMarca = (d['Marca'] || '').trim();
+          const itemArea = (d['Area'] || '').trim();
+          const itemPlan = (d['Plan'] || '').trim();
+          const itemSim = (d['TipoSim'] || '').trim();
           const itemNum = (d['Numero'] || '').toLowerCase();
-          const itemIMEI = (d['IMEI'] || '').toLowerCase();
+          const itemMail = (d['Mail'] || '').toLowerCase();
           const itemUser = (d['Usuario'] || '').toLowerCase();
 
-          const matchesGlobal = !searchGlobal || itemNum.includes(searchGlobal) || itemIMEI.includes(searchGlobal) || itemUser.includes(searchGlobal);
-          const matchesProv = !proveedor || itemProv === proveedor;
-          const matchesMarca = !marca || itemMarca === marca;
-          const matchesNum = !numCel || itemNum.includes(numCel) || itemIMEI.includes(numCel);
+          const matchesGlobal = !searchGlobal || itemNum.includes(searchGlobal) || itemMail.includes(searchGlobal) || itemUser.includes(searchGlobal) || itemArea.toLowerCase().includes(searchGlobal);
+          const matchesArea = !areaCel || itemArea === areaCel;
+          const matchesPlan = !planCel || itemPlan === planCel;
+          const matchesSim = !tipoSim || itemSim === tipoSim;
+          const matchesNum = !numCel || itemNum.includes(numCel) || itemMail.includes(numCel);
           const matchesUser = !userCel || itemUser.includes(userCel);
 
-          return matchesGlobal && matchesProv && matchesMarca && matchesNum && matchesUser;
+          return matchesGlobal && matchesArea && matchesPlan && matchesSim && matchesNum && matchesUser;
         });
       }
 
@@ -1125,11 +1160,11 @@
         container.innerHTML = `
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-              <h2 class="text-sm font-bold text-purple-400 mb-4">📡 Líneas por Proveedor</h2>
+              <h2 class="text-sm font-bold text-purple-400 mb-4">🏢 Volumen de Líneas por Área</h2>
               <div class="h-64"><canvas id="c1"></canvas></div>
             </div>
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-              <h2 class="text-sm font-bold text-cyan-400 mb-4">📱 Distribución por Marca</h2>
+              <h2 class="text-sm font-bold text-emerald-400 mb-4">💵 Gasto Mensual Acumulado por Área (MXN)</h2>
               <div class="h-64"><canvas id="c2"></canvas></div>
             </div>
           </div>
@@ -1227,12 +1262,28 @@
     }
 
     function renderCelularesCharts(data) {
-      const provCount = {};
-      data.forEach(d => { const p = (d['Proveedor'] || 'N/D').trim(); provCount[p] = (provCount[p] || 0) + 1; });
+      const areaVolumen = {};
+      const areaCostos = {};
+
+      data.forEach(d => { 
+        const a = (d['Area'] || 'General').trim(); 
+        const val = parseFloat((d['PagoMensual'] || '0').replace(/[^0-9.-]+/g,"")) || 0;
+        
+        areaVolumen[a] = (areaVolumen[a] || 0) + 1; 
+        areaCostos[a] = (areaCostos[a] || 0) + val;
+      });
 
       chartObj1 = new Chart(document.getElementById('c1'), {
         type: 'bar',
-        data: { labels: Object.keys(provCount), datasets: [{ label: 'Líneas', data: Object.values(provCount), backgroundColor: '#a855f7', borderRadius: 6 }] },
+        data: { 
+          labels: Object.keys(areaVolumen), 
+          datasets: [{ 
+            label: 'Líneas Totales', 
+            data: Object.values(areaVolumen), 
+            backgroundColor: '#8b5cf6', 
+            borderRadius: 6 
+          }] 
+        },
         options: { 
           responsive: true, 
           maintainAspectRatio: false, 
@@ -1241,27 +1292,32 @@
             const points = chartObj1.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
             if (points.length) {
               const label = chartObj1.data.labels[points[0].index];
-              openChartDetailModal('proveedor', label);
+              openChartDetailModal('area', label);
             }
           }
         }
       });
 
-      const marcaCount = {};
-      data.forEach(d => { const m = (d['Marca'] || 'N/D').trim(); marcaCount[m] = (marcaCount[m] || 0) + 1; });
-
       chartObj2 = new Chart(document.getElementById('c2'), {
-        type: 'doughnut',
-        data: { labels: Object.keys(marcaCount), datasets: [{ data: Object.values(marcaCount), backgroundColor: ['#06b6d4', '#3b82f6', '#10b981', '#f59e0b', '#ec4899'] }] },
+        type: 'bar',
+        data: { 
+          labels: Object.keys(areaCostos), 
+          datasets: [{ 
+            label: 'Gasto Mensual ($)', 
+            data: Object.values(areaCostos), 
+            backgroundColor: '#10b981', 
+            borderRadius: 6 
+          }] 
+        },
         options: { 
           responsive: true, 
           maintainAspectRatio: false, 
-          plugins: { legend: { position: 'bottom' } },
+          plugins: { legend: { display: false } },
           onClick: (evt) => {
             const points = chartObj2.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
             if (points.length) {
               const label = chartObj2.data.labels[points[0].index];
-              openChartDetailModal('marca', label);
+              openChartDetailModal('area', label);
             }
           }
         }
@@ -1328,12 +1384,12 @@
           } else if (currentDataset === 'CELULARES') {
             tr.innerHTML = `
               <td class="p-3 font-mono font-bold text-blue-400">${row['Numero']}</td>
-              <td class="p-3 font-semibold text-purple-300">${row['Proveedor']}</td>
-              <td class="p-3 text-emerald-400 font-bold">${row['PagoMensual']}</td>
-              <td class="p-3 font-medium text-slate-200">${row['Marca']} ${row['Modelo']}</td>
-              <td class="p-3 font-mono text-slate-400 text-[11px]">${row['IMEI']}</td>
+              <td class="p-3 font-semibold text-indigo-300">${row['Area']}</td>
               <td class="p-3 text-white font-medium">${row['Usuario']}</td>
-              <td class="p-3 text-slate-400">${row['Plan']}</td>
+              <td class="p-3 font-mono text-slate-400 text-[11px]">${row['Mail']}</td>
+              <td class="p-3 font-semibold text-purple-300">${row['Plan']}</td>
+              <td class="p-3 text-emerald-400 font-bold">${row['PagoMensual']}</td>
+              <td class="p-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700">${row['TipoSim']}</span></td>
               <td class="p-3 text-center">
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   ${row['Estatus']}
@@ -1356,7 +1412,6 @@
     function prevPage() { if (currentPage > 1) { currentPage--; renderTable(); } }
     function nextPage() { if (currentPage * pageSize < filteredData.length) { currentPage++; renderTable(); } }
 
-    // RENDERIZADO DINÁMICO DE LAS PLANTILLAS DENTRO DEL MODAL
     function renderModalForm(templateType) {
       const formContainer = document.getElementById('modalFormContainer');
 
@@ -1382,14 +1437,13 @@
         `;
       } else if (templateType === 'CELULAR') {
         formContainer.innerHTML = `
-          <div><label class="block text-slate-400 mb-1 font-bold text-blue-400">Número de Línea</label><input type="text" id="formNumCelular" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: 55 1234 5678"></div>
-          <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Proveedor de Servicio</label><select id="formProveedor" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"><option value="Telcel">Telcel</option><option value="AT&T">AT&T</option><option value="Movistar">Movistar</option><option value="Otro">Otro</option></select></div>
-          <div><label class="block text-slate-400 mb-1 font-bold text-emerald-400">Pago Mensual (MXN)</label><input type="text" id="formPagoMensual" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: $499.00"></div>
-          <div><label class="block text-slate-400 mb-1">Marca del Equipo</label><input type="text" id="formMarcaCel" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Apple / Samsung"></div>
-          <div><label class="block text-slate-400 mb-1">Modelo del Equipo</label><input type="text" id="formModeloCel" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPhone 13 / Galaxy S22"></div>
-          <div><label class="block text-slate-400 mb-1">IMEI / Serie</label><input type="text" id="formIMEI" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: 356789012345678"></div>
-          <div><label class="block text-slate-400 mb-1">Usuario Asignado</label><input type="text" id="formUsuarioCel" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Nombre del Colaborador"></div>
-          <div><label class="block text-slate-400 mb-1">Plan / Esquema</label><input type="text" id="formPlanCel" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Plan Renta / Prepago"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-blue-400">Número de Línea</label><input type="text" id="formNumCelular" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: 56 6757 8638"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-indigo-400">Área / Departamento</label><input type="text" id="formAreaCel" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Retail / Construcción"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Colaborador</label><input type="text" id="formUsuarioCel" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Nombre completo"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-cyan-400">Correo Corporativo</label><input type="email" id="formMailCel" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="correo@benandfrank.com"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-emerald-400">Costo Mensual (MXN)</label><input type="text" id="formPagoMensual" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: $219 MXN"></div>
+          <div><label class="block text-slate-400 mb-1">Plan</label><input type="text" id="formPlanCel" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Plan 5 GB"></div>
+          <div><label class="block text-slate-400 mb-1">Tipo SIM</label><select id="formTipoSim" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"><option value="SIM">SIM</option><option value="ESIM">eSIM</option></select></div>
         `;
       } else { // EQUIPO
         if (currentDataset === 'HQ') {
