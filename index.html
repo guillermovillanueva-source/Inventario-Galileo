@@ -353,7 +353,7 @@
     const SHEET_HQ_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6O7VuFl6hhj6TzvCYlHF5mVq6qQz49oTsFurFP7yINJzTjNddurEHG_GQCVsy4cqEO8ntD_m1WYi-/pub?gid=1154664784&single=true&output=csv';
     const SHEET_TIENDAS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVj5iUE5wOYEvbzeIKp1nIJwQ9gYbAPqK9KGid2hmsVxjHeL4OclmpwJDUoaKYJSCsN6K3IgCHHuQl/pub?gid=1184661297&single=true&output=csv';
 
-    // MAPEO NORMALIZADO DE IDS ÚNICOS POR TIENDA / SUCURSAL (NO INCREMENTAL)
+    // MAPEO NORMALIZADO DE IDS ÚNICOS POR TIENDA / SUCURSAL
     const TIENDA_ID_MAP = {
       'san angel': 'TDA-SANA',
       'condesa': 'TDA-COND',
@@ -363,6 +363,40 @@
       'interlomas': 'TDA-INTE'
     };
 
+    // FUNCIÓN DE ESTANDARIZACIÓN DE TIPOS DE EQUIPO (NORMALIZACIÓN DE TAXONOMÍA ITAM)
+    function normalizeTipoEquipo(rawTipo) {
+      if (!rawTipo) return 'Otro';
+      
+      const str = rawTipo.toString().toLowerCase().trim();
+
+      if (str.includes('access') || str.includes('acces') || str === 'ap') {
+        return 'Access Point';
+      }
+      if (str.includes('ipad')) {
+        return 'iPad';
+      }
+      if (str.includes('laptop') || str.includes('lptop')) {
+        return 'Laptop';
+      }
+      if (str.includes('mac') || str.includes('imac')) {
+        return 'iMac / Mac';
+      }
+      if (str.includes('pc') || str.includes('aio') || str.includes('ideacentre')) {
+        return 'PC / All-in-One';
+      }
+      if (str.includes('swictch') || str.includes('switch')) {
+        return 'Switch';
+      }
+      if (str.includes('firewall')) {
+        return 'Firewall';
+      }
+      if (str.includes('zettle') || str === 'mp' || str.includes('point') || str.includes('pos')) {
+        return 'Terminal POS';
+      }
+
+      return rawTipo.charAt(0).toUpperCase() + rawTipo.slice(1).trim();
+    }
+
     // ESTRUCTURA ESTÁNDAR DE COLUMNAS PARA PLANTILLAS
     const BULK_STRUCTURES = {
       HQ: ['Numero de Serie', 'Responsable del activo', 'Mail', 'Direccion', 'Marca', 'Model', 'Tier Actual', 'FechaAlta'],
@@ -371,7 +405,7 @@
       CELULARES: ['Numero', 'Area', 'Usuario', 'Mail', 'Plan', 'PagoMensual', 'TipoSim', 'Modelo', 'Estatus', 'FechaAlta']
     };
 
-    // BASE DE DATOS DIRECTA INCORPORADA COMPLETA (65 LÍNEAS DE CELULARES)
+    // BASE DE DATOS DIRECTA INCORPORADA COMPLETA (CELULARES)
     const globalCelularesDataset = [
       { Numero: "56 6757 8638", Usuario: "Ana Marlen Gonzalez Martinez", Mail: "marlen.gonzalez@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "9.8 GB / 9.9 GB", Modelo: "iPhone 13", FechaAlta: "2026-01-15", AdminCaptura: "guillermo.villanueva@benandfrank.com", FechaSistema: "2026-01-15 10:30:00" },
       { Numero: "56 5431 1371", Usuario: "Abril Desiree Lopez Biciego", Mail: "desiree.lopez@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "9.6 GB / 10 GB", Modelo: "Samsung Galaxy A54", FechaAlta: "2026-02-01", AdminCaptura: "edgar.rodriguez@benandfrank.com", FechaSistema: "2026-02-01 11:15:22" },
@@ -721,7 +755,7 @@
       }).filter(item => item['Mail'] || item['Responsable del activo'] || item['Numero de Serie']);
     }
 
-    // PARSEO CORREGIDO CON ID DE TIENDA ÚNICO X SUCURSAL
+    // PARSEO DE TIENDAS CORREGIDO (ID TIENDA ÚNICO X SUCURSAL + TIPO EQUIPO NORMALIZADO)
     function parseTiendasData(rawRows) {
       let headerIndex = rawRows.findIndex(row => row.some(cell => 
         String(cell).toLowerCase().includes('tienda') || 
@@ -751,17 +785,20 @@
         // 2. Extraer el identificador único del activo (Serie o Clave)
         const assetId = rawObj['Serie'] || rawObj['N/S'] || rawObj['clave'] || rawObj['Asset ID'] || `AST-${idx+100}`;
 
-        const tipoEquipo = rawObj['Producto'] || rawObj['Equipo'] || rawObj['Tipo'] || 'iPad';
-        const marca = rawObj['Marca'] || (tipoEquipo.toLowerCase().includes('ipad') || tipoEquipo.toLowerCase().includes('mac') ? 'Apple' : tipoEquipo.toLowerCase().includes('laptop') ? 'Lenovo' : 'Genérico');
-        const modelo = rawObj['Modelo'] || rawObj['Modelo '] || 'Estándar POS';
+        // 3. Normalizar el Tipo de Equipo
+        const rawTipo = rawObj['Producto'] || rawObj['Equipo'] || rawObj['Tipo'] || 'iPad';
+        const tipoEquipoNorm = normalizeTipoEquipo(rawTipo);
+
+        const marca = rawObj['Marca'] || (tipoEquipoNorm === 'iPad' || tipoEquipoNorm === 'iMac / Mac' ? 'Apple' : 'Genérico');
+        const modelo = rawObj['Modelo'] || rawObj['Modelo '] || 'Estándar';
         const estatus = rawObj['Estatus'] || 'Activo';
 
         return {
           _rowIndex: idx,
-          'Asset_ID': assetId,          // Único por Equipo (Serie/Clave)
-          'ID_Tienda': idTiendaUnico,   // Único por Sucursal (Compartido entre equipos de la misma sede)
+          'Asset_ID': assetId,
+          'ID_Tienda': idTiendaUnico,
           'Tienda': tiendaNombre,
-          'Tipo_Equipo': tipoEquipo,
+          'Tipo_Equipo': tipoEquipoNorm,
           'Marca': marca,
           'Modelo': modelo,
           'Estatus': estatus
@@ -904,7 +941,7 @@
         `;
       } else if (currentDataset === 'TIENDAS') {
         const sucursales = new Set(data.map(d => d['Tienda'])).size;
-        const posDisponibles = data.filter(d => (d['Tipo_Equipo'] || '').toLowerCase().includes('pos') || (d['Tipo_Equipo'] || '').toLowerCase().includes('ipad') || (d['Tipo_Equipo'] || '').toLowerCase().includes('caja')).length;
+        const posDisponibles = data.filter(d => (d['Tipo_Equipo'] || '').toLowerCase().includes('pos') || (d['Tipo_Equipo'] || '').toLowerCase().includes('ipad') || (d['Tipo_Equipo'] || '').toLowerCase().includes('terminal')).length;
         const alertas = data.filter(d => (d['Estatus'] || '').toLowerCase().includes('soporte') || (d['Estatus'] || '').toLowerCase().includes('falla')).length;
 
         kpiContainer.className = "grid grid-cols-1 sm:grid-cols-3 gap-4";
@@ -1843,9 +1880,9 @@
         formContainer.innerHTML = `
           <div><label class="block text-slate-400 mb-1 font-bold text-indigo-400">ID / Código Tienda</label><input type="text" id="formIDTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: TDA-SANA"></div>
           <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Nombre de la Sede</label><input type="text" id="formTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: San Angel"></div>
-          <div><label class="block text-slate-400 mb-1 font-bold text-emerald-400">Tipo de Equipo</label><input type="text" id="formTipo" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad POS / Laptop"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-emerald-400">Tipo de Equipo</label><input type="text" id="formTipo" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad / Access Point"></div>
           <div><label class="block text-slate-400 mb-1 font-bold text-cyan-400">Marca</label><input type="text" id="formMarcaTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Apple / Lenovo"></div>
-          <div><label class="block text-slate-400 mb-1 font-bold text-white">Modelo</label><input type="text" id="formModeloTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad Air M1 / ThinkPad T14"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-white">Modelo</label><input type="text" id="formModeloTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad mini 4 / MR18"></div>
           <div><label class="block text-slate-400 mb-1 font-bold text-amber-400">Fecha de Alta (Captura Admin)</label><input type="date" id="formFechaAlta" value="${todayIso}" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"></div>
         `;
       } else if (templateType === 'USUARIO') {
@@ -1869,7 +1906,7 @@
           <div><label class="block text-slate-400 mb-1 font-bold text-amber-400">Fecha de Alta (Captura Admin)</label><input type="date" id="formFechaAlta" value="${todayIso}" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"></div>
           <div><label class="block text-slate-400 mb-1">Tipo SIM</label><select id="formTipoSim" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"><option value="SIM">SIM</option><option value="ESIM">eSIM</option></select></div>
         `;
-      } else { // EQUIPO
+      } else { // EQUIPO HQ / TIENDAS
         if (currentDataset === 'HQ') {
           formContainer.innerHTML = `
             <div><label class="block text-slate-400 mb-1 font-bold text-blue-400">Asset ID / Serie</label><input type="text" id="formSerie" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: LAP-00123 / C02XXX"></div>
@@ -1884,7 +1921,7 @@
             <div><label class="block text-slate-400 mb-1 font-bold text-blue-400">Serie / Asset ID</label><input type="text" id="formAssetID" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: F9FRK2PYGHK9"></div>
             <div><label class="block text-slate-400 mb-1 font-bold text-indigo-400">ID Tienda</label><input type="text" id="formIDTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: TDA-SANA"></div>
             <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Nombre Tienda</label><input type="text" id="formTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: San Angel"></div>
-            <div><label class="block text-slate-400 mb-1 font-bold text-emerald-400">Tipo de Equipo</label><input type="text" id="formTipo" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad POS / Impresora"></div>
+            <div><label class="block text-slate-400 mb-1 font-bold text-emerald-400">Tipo de Equipo</label><input type="text" id="formTipo" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad / Access Point"></div>
             <div><label class="block text-slate-400 mb-1 font-bold text-cyan-400">Marca</label><input type="text" id="formMarcaTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Apple / Lenovo"></div>
             <div><label class="block text-slate-400 mb-1 font-bold text-amber-400">Fecha de Alta (Captura Admin)</label><input type="date" id="formFechaAlta" value="${todayIso}" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"></div>
           `;
@@ -1980,7 +2017,7 @@
             item['Asset_ID'] = document.getElementById('formAssetID')?.value || item['Asset_ID'];
             item['ID_Tienda'] = document.getElementById('formIDTienda')?.value || item['ID_Tienda'];
             item['Tienda'] = document.getElementById('formTienda')?.value || item['Tienda'];
-            item['Tipo_Equipo'] = document.getElementById('formTipo')?.value || item['Tipo_Equipo'];
+            item['Tipo_Equipo'] = normalizeTipoEquipo(document.getElementById('formTipo')?.value || item['Tipo_Equipo']);
             item['Marca'] = document.getElementById('formMarcaTienda')?.value || item['Marca'];
             item['Modelo'] = document.getElementById('formModeloTienda')?.value || item['Modelo'];
           } else if (currentDataset === 'CELULARES') {
