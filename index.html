@@ -191,6 +191,10 @@
               <span id="userRoleBadge" class="text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.2 rounded uppercase font-mono">Lector</span>
             </div>
           </div>
+          <button onclick="logout()" title="Cerrar sesión" class="ml-2 flex items-center gap-1.5 text-rose-400 hover:text-white bg-rose-500/10 hover:bg-rose-500/30 border border-rose-500/30 px-2.5 py-1.5 rounded-lg font-semibold transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            <span class="hidden sm:inline">Salir</span>
+          </button>
         </div>
       </div>
     </header>
@@ -728,13 +732,15 @@
 
     function switchDataset(datasetKey) {
       currentDataset = datasetKey;
+      cubeSel = { Marca: '', Modelo: '' };
       let title = 'Listado Completo - HQ Corporativo';
       let navArea = 'Óptica por Área';
       let navModelo = 'Óptica por Modelo';
 
       if (datasetKey === 'TIENDAS') {
         title = 'Listado Completo - Tiendas / Retail';
-        navArea = 'Óptica por Tienda';
+        navArea = 'Cruces por Tienda';
+        navModelo = 'Matriz Pivot (Cubo)';
       } else if (datasetKey === 'CELULARES') {
         title = 'Listado Completo - Telefonía Celular';
         navArea = 'Volumen y Costos x BU';
@@ -1344,7 +1350,9 @@
           const matchesEstatus = !estatus || itemEstatus === estatus;
           const matchesModelo = !modeloText || itemMarca.includes(modeloText) || itemModelo.includes(modeloText) || itemAsset.includes(modeloText);
 
-          return matchesGlobal && matchesTienda && matchesProducto && matchesEstatus && matchesModelo;
+          const matchesCube = (!cubeSel.Marca || (d['Marca'] || '').trim() === cubeSel.Marca) && (!cubeSel.Modelo || (d['Modelo'] || '').trim() === cubeSel.Modelo);
+
+          return matchesGlobal && matchesTienda && matchesProducto && matchesEstatus && matchesModelo && matchesCube;
         });
       } else if (currentDataset === 'CELULARES') {
         const areaCel = document.getElementById('filterAreaCel')?.value || '';
@@ -1473,6 +1481,7 @@
       if (chartObj2) chartObj2.destroy();
       if (chartObj3) chartObj3.destroy();
       if (chartObj4) chartObj4.destroy();
+      cubeCharts.forEach(c => c.destroy()); cubeCharts = [];
 
       if (currentDataset === 'HQ') {
         container.innerHTML = `
@@ -1497,19 +1506,7 @@
         `;
         renderGlobalHQCharts(data);
       } else if (currentDataset === 'TIENDAS') {
-        container.innerHTML = `
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-              <h2 class="text-sm font-bold text-blue-400 mb-4">🏪 Dispositivos por Tienda</h2>
-              <div class="h-64"><canvas id="c1"></canvas></div>
-            </div>
-            <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-              <h2 class="text-sm font-bold text-purple-400 mb-4">📦 Mix de Equipos Retail</h2>
-              <div class="h-64"><canvas id="c2"></canvas></div>
-            </div>
-          </div>
-        `;
-        renderTiendasCharts(data);
+        renderTiendasCube();
       } else if (currentDataset === 'CELULARES') {
         container.innerHTML = `
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -2153,6 +2150,145 @@
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    }
+
+    // ================= CUBO DE TIENDAS (dashboards con segmentación cruzada) =================
+    const PAL = ['#3b82f6','#a855f7','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899','#84cc16','#f97316','#6366f1'];
+    const DIMS = { Tienda: 'Tienda', Tipo_Equipo: 'Tipo de equipo', Marca: 'Marca', Estatus: 'Estatus', Modelo: 'Modelo' };
+    const DIM_SEL = { Tienda: 'filterTienda', Tipo_Equipo: 'filterProducto', Estatus: 'filterEstatus' };
+    const SELC = 'bg-[#0f1115] border border-rocker text-slate-300 px-2 py-1 rounded-lg text-xs';
+    let cubeSel = { Marca: '', Modelo: '' };
+    let cubeCharts = [];
+    let pivot = { row: 'Tienda', col: 'Tipo_Equipo' };
+    let pivAx = { r: [], c: [] };
+
+    const val = (d, k) => (d[k] || 'N/D').trim();
+    const getSel = k => DIM_SEL[k] ? (document.getElementById(DIM_SEL[k])?.value || '') : (cubeSel[k] || '');
+    const tally = (rows, k) => { const m = {}; rows.forEach(d => { const v = val(d, k); m[v] = (m[v] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]); };
+
+    function setSel(k, v) {
+      if (DIM_SEL[k]) {
+        const s = document.getElementById(DIM_SEL[k]);
+        if (![...s.options].some(o => o.value === v)) s.add(new Option(v, v));
+        s.value = v;
+      } else cubeSel[k] = v;
+    }
+    // Aplica (o quita si ya estaban todas activas) una o varias dimensiones a la vez
+    function setDims(pairs) {
+      const off = pairs.every(([k, v]) => getSel(k) === v);
+      pairs.forEach(([k, v]) => setSel(k, off ? '' : v));
+      logAction('CUBO_SEGMENTAR', pairs.map(([k, v]) => `${k}=${v}`).join(' | ') + (off ? ' (quitado)' : ''));
+      applyFilters();
+    }
+    function clearDim(k) { setSel(k, ''); applyFilters(); }
+    function clearCube() { Object.keys(DIMS).forEach(k => setSel(k, '')); applyFilters(); }
+
+    // Una gráfica ignora su propio filtro para mostrar las demás opciones atenuadas (comportamiento de cubo)
+    function baseFor(k) {
+      if (!getSel(k)) return filteredData;
+      return globalData.filter(d => Object.keys(DIMS).every(x => x === k || !getSel(x) || val(d, x) === getSel(x)));
+    }
+
+    function simpleChart(id, type, k) {
+      const e = tally(baseFor(k), k).slice(0, 10), sel = getSel(k), pie = type === 'doughnut';
+      cubeCharts.push(new Chart(document.getElementById(id), {
+        type: type === 'hbar' ? 'bar' : type,
+        data: { labels: e.map(x => x[0]), datasets: [{ data: e.map(x => x[1]), borderRadius: pie ? 0 : 6, borderWidth: pie ? 0 : 0,
+          backgroundColor: e.map((x, i) => !sel || x[0] === sel ? PAL[i % PAL.length] : PAL[i % PAL.length] + '44') }] },
+        options: { responsive: true, maintainAspectRatio: false, indexAxis: type === 'hbar' ? 'y' : 'x',
+          plugins: { legend: { display: pie, position: 'bottom' } },
+          onClick: (ev, els, ch) => { if (els.length) setDims([[k, ch.data.labels[els[0].index]]]); } }
+      }));
+    }
+
+    function stackedChart(id, xk, sk) {
+      const rows = filteredData;
+      const xs = tally(rows, xk).slice(0, 10).map(x => x[0]), ss = tally(rows, sk).slice(0, 8).map(x => x[0]);
+      const cnt = {}; rows.forEach(d => { const key = val(d, xk) + '|' + val(d, sk); cnt[key] = (cnt[key] || 0) + 1; });
+      cubeCharts.push(new Chart(document.getElementById(id), {
+        type: 'bar',
+        data: { labels: xs, datasets: ss.map((s, i) => ({ label: s, data: xs.map(x => cnt[x + '|' + s] || 0), backgroundColor: PAL[i % PAL.length] })) },
+        options: { responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } } },
+          scales: { x: { stacked: true }, y: { stacked: true } },
+          onClick: (ev, els, ch) => { if (els.length) setDims([[xk, ch.data.labels[els[0].index]], [sk, ch.data.datasets[els[0].datasetIndex].label]]); } }
+      }));
+    }
+
+    function pivotClick(i, j) { setDims([[pivot.row, pivAx.r[i]], [pivot.col, pivAx.c[j]]]); }
+
+    function renderPivot(rows) {
+      const { row, col } = pivot;
+      const rs = tally(rows, row).slice(0, 25).map(x => x[0]), cs = tally(rows, col).slice(0, 12).map(x => x[0]);
+      pivAx = { r: rs, c: cs };
+      const m = {}, rt = {}, ct = {}; let max = 1;
+      rows.forEach(d => { const a = val(d, row), b = val(d, col), key = a + '\u0001' + b;
+        m[key] = (m[key] || 0) + 1; max = Math.max(max, m[key]); rt[a] = (rt[a] || 0) + 1; ct[b] = (ct[b] || 0) + 1; });
+      const opts = s => Object.entries(DIMS).map(([k, l]) => `<option value="${k}" ${k === s ? 'selected' : ''}>${l}</option>`).join('');
+      const body = rs.map((r, i) => `<tr class="border-t border-rocker"><td class="p-2 font-semibold text-purple-300 whitespace-nowrap">${esc(r)}</td>` +
+        cs.map((c, j) => { const v = m[r + '\u0001' + c] || 0;
+          return `<td onclick="pivotClick(${i},${j})" class="p-2 text-center cursor-pointer hover:ring-1 hover:ring-blue-400" style="background:rgba(59,130,246,${v ? 0.12 + 0.6 * v / max : 0})">${v || '·'}</td>`; }).join('') +
+        `<td class="p-2 text-center font-bold text-white">${rt[r]}</td></tr>`).join('');
+      return `<div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl space-y-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <h2 class="text-sm font-bold text-white">🧊 Matriz Pivot</h2>
+          <label class="text-slate-400">Filas <select onchange="pivot.row=this.value;renderDashboard(filteredData)" class="${SELC}">${opts(row)}</select></label>
+          <label class="text-slate-400">Columnas <select onchange="pivot.col=this.value;renderDashboard(filteredData)" class="${SELC}">${opts(col)}</select></label>
+          <span class="text-[10px] text-slate-500">Clic en una celda para filtrar la tabla inferior</span>
+        </div>
+        <div class="overflow-x-auto"><table class="w-full text-xs text-slate-300">
+          <thead class="text-[10px] uppercase text-slate-400"><tr><th class="p-2 text-left">${DIMS[row]} \\ ${DIMS[col]}</th>${cs.map(c => `<th class="p-2 text-center">${esc(c)}</th>`).join('')}<th class="p-2 text-center text-white">Total</th></tr></thead>
+          <tbody>${body}</tbody>
+          <tfoot><tr class="border-t border-rocker font-bold text-white"><td class="p-2">Total</td>${cs.map(c => `<td class="p-2 text-center">${ct[c]}</td>`).join('')}<td class="p-2 text-center">${rows.length}</td></tr></tfoot>
+        </table></div></div>`;
+    }
+
+    function renderTiendasCube() {
+      Chart.defaults.color = '#9ea4b0'; Chart.defaults.borderColor = '#242830';
+      const av = ['global', 'area', 'modelo'].includes(activeView) ? activeView : 'global';
+      const tabs = [['global', '📊 Resumen'], ['area', '🔀 Cruces por Tienda'], ['modelo', '🧊 Matriz Pivot']].map(([v, l]) =>
+        `<button onclick="switchView('${v}')" class="px-3 py-1.5 rounded-lg font-semibold border transition ${v === av ? 'bg-blue-600/10 text-blue-400 border-blue-500/30' : 'border-rocker text-slate-400 hover:text-white'}">${l}</button>`).join('');
+      const act = Object.keys(DIMS).filter(getSel);
+      const chips = act.map(k => `<button onclick="clearDim('${k}')" class="px-2 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30 text-[10px]">${DIMS[k]}: ${esc(getSel(k))} ✕</button>`).join('') +
+        (act.length ? `<button onclick="clearCube()" class="text-[10px] text-rose-400 hover:text-rose-300 px-2">Limpiar todo</button>` : `<span class="text-[10px] text-slate-600">Haz clic en cualquier gráfico para segmentar todo el dashboard y la tabla</span>`);
+      const defs = av === 'global'
+        ? [['🏪 Dispositivos por Tienda', 'bar', 'Tienda'], ['📦 Mix de Equipos', 'doughnut', 'Tipo_Equipo'], ['🟢 Estatus del Parque', 'doughnut', 'Estatus'], ['🏷️ Top Marcas', 'hbar', 'Marca']]
+        : [['Tienda × Tipo de equipo', 'st', 'Tienda', 'Tipo_Equipo'], ['Tienda × Estatus', 'st', 'Tienda', 'Estatus'], ['Tipo de equipo × Marca', 'st', 'Tipo_Equipo', 'Marca'], ['Marca × Estatus', 'st', 'Marca', 'Estatus']];
+      const card = (t, i) => `<div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl"><h2 class="text-sm font-bold text-white mb-4">${t}</h2><div class="h-64"><canvas id="k${i}"></canvas></div></div>`;
+      const body = av === 'modelo' ? renderPivot(filteredData) : `<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">${defs.map((d, i) => card(d[0], i)).join('')}</div>`;
+      document.getElementById('viewContainer').innerHTML = `<div class="flex flex-wrap items-center gap-2">${tabs}</div><div class="flex flex-wrap items-center gap-2">${chips}</div>${body}`;
+      if (av !== 'modelo') defs.forEach((d, i) => d[1] === 'st' ? stackedChart('k' + i, d[2], d[3]) : simpleChart('k' + i, d[1], d[2]));
+    }
+
+    // ================= LOGOUT =================
+    function logout() {
+      if (!confirm('¿Cerrar sesión?')) return;
+      logAction('LOGOUT', 'Cierre de sesión');
+      try { google.accounts.id.disableAutoSelect(); } catch (e) {}
+      [chartObj1, chartObj2, chartObj3, chartObj4, ...cubeCharts].forEach(c => c && c.destroy());
+      chartObj1 = chartObj2 = chartObj3 = chartObj4 = null; cubeCharts = [];
+      currentUser = null; isAdmin = false; globalData = []; filteredData = [];
+      cubeSel = { Marca: '', Modelo: '' }; activeView = 'global'; currentDataset = 'HQ';
+      ['mainBtnNuevo', 'mainBtnBulk'].forEach(id => document.getElementById(id).classList.add('hidden'));
+      ['sidebarBtnNuevo', 'sidebarBtnBulk', 'sidebarResetBtn'].forEach(id => { const b = document.getElementById(id); b.classList.add('hidden'); b.classList.remove('flex'); });
+      document.getElementById('adminNavSection').classList.add('hidden');
+      ['global', 'area', 'modelo'].forEach(v => document.getElementById('nav-' + v).className = v === 'global'
+        ? 'w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/20 font-medium transition'
+        : 'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition');
+      document.getElementById('filterSection').classList.remove('hidden');
+      document.getElementById('tableSection').classList.remove('hidden');
+      document.getElementById('viewContainer').innerHTML = '';
+      document.getElementById('kpiContainerGrid').innerHTML = '';
+      document.getElementById('inventoryTable').innerHTML = '<tr><td colspan="10" class="text-center p-8 text-slate-600">Inicia sesión para consultar información...</td></tr>';
+      document.getElementById('paginationInfo').innerText = 'Mostrando 0 de 0 activos';
+      document.getElementById('searchInput').value = '';
+      document.getElementById('userMailDisplay').innerText = 'Cargando...';
+      document.getElementById('userBUDisplay').innerText = '--';
+      document.getElementById('userAvatar').innerHTML = '--';
+      const badge = document.getElementById('userRoleBadge');
+      badge.innerText = 'Lector'; badge.className = 'text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.2 rounded uppercase font-mono';
+      const sel = document.getElementById('datasetSelector'); sel.disabled = false; sel.value = 'HQ';
+      document.getElementById('loginModal').classList.remove('hidden');
     }
   </script>
 </body>
