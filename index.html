@@ -138,6 +138,11 @@
           <span>Capturar Registro</span>
         </button>
 
+        <button id="sidebarBtnBulk" onclick="openBulkModal()" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition hidden">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          <span>Carga Masiva (Excel / CSV)</span>
+        </button>
+
         <button onclick="exportCSV()" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-panel-hover transition">
           <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
           <span>Exportar Datos</span>
@@ -205,8 +210,11 @@
           <h2 id="tableTitleDisplay" class="text-sm font-bold text-white">Listado Completo - HQ Corporativo</h2>
           
           <div class="flex gap-2">
+            <button id="mainBtnBulk" onclick="openBulkModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3 py-1.5 rounded-lg text-xs transition hidden flex items-center gap-1.5">
+              <span>📂 Carga Masiva</span>
+            </button>
             <button id="mainBtnNuevo" onclick="openModal('EQUIPO')" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-3 py-1.5 rounded-lg text-xs transition hidden">
-              + Capturar
+              + Capturar Individual
             </button>
           </div>
         </div>
@@ -232,6 +240,53 @@
       </div>
 
     </main>
+  </div>
+
+  <!-- MODAL DE CARGA MASIVA CON PLANTILLAS Y VALIDACIÓN -->
+  <div id="bulkModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-panel border border-rocker rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col">
+      <div class="p-4 border-b border-rocker flex justify-between items-center bg-[#0f1115]">
+        <div>
+          <h3 class="font-bold text-sm text-emerald-400 flex items-center gap-2">
+            📂 Carga Masiva de Registros (Excel / CSV)
+          </h3>
+          <p class="text-[10px] text-slate-400">Descarga la plantilla oficial para evitar errores de estructura de columnas</p>
+        </div>
+        <button onclick="closeBulkModal()" class="text-slate-500 hover:text-white font-bold px-2 py-1">✕</button>
+      </div>
+
+      <div class="p-6 space-y-5 text-xs">
+        <div>
+          <label class="block text-slate-300 font-bold mb-1.5">1. Selecciona la Base de Destino:</label>
+          <select id="bulkDatasetTarget" onchange="updateBulkTemplateInfo()" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-500 font-semibold">
+            <option value="HQ">💻 Equipos HQ / Computo</option>
+            <option value="TIENDAS">🏪 Ubicaciones / Sedes Retail</option>
+            <option value="USUARIOS">👤 Directorio de Usuarios</option>
+            <option value="CELULARES">📱 Telefonía Celular</option>
+          </select>
+        </div>
+
+        <div class="bg-[#0f1115] p-3.5 rounded-xl border border-rocker space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-slate-300">2. Estructura Oficial de Columnas:</span>
+            <button onclick="downloadBulkTemplate()" class="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-md hover:bg-emerald-500/20 font-bold text-[10px] transition flex items-center gap-1">
+              <span>📥 Descargar Plantilla Modelo (CSV)</span>
+            </button>
+          </div>
+          <p id="bulkTemplateColsList" class="font-mono text-[10px] text-slate-400 leading-relaxed bg-[#171a1f] p-2 rounded border border-rocker"></p>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-bold mb-1.5">3. Selecciona tu archivo guardado como CSV:</label>
+          <input type="file" id="bulkFileInput" accept=".csv" class="w-full bg-[#0f1115] border border-rocker text-slate-400 px-3 py-2 rounded-lg text-xs file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500" />
+        </div>
+
+        <div class="pt-3 border-t border-rocker flex justify-end gap-3">
+          <button type="button" onclick="closeBulkModal()" class="px-4 py-2 border border-rocker rounded-lg text-slate-400 hover:text-white">Cancelar</button>
+          <button type="button" onclick="processBulkUpload()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition shadow-lg shadow-emerald-600/20">Procesar Carga Masiva</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- MODAL FLOTANTE PARA DETALLE DE GRÁFICOS -->
@@ -298,18 +353,21 @@
     const SHEET_HQ_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6O7VuFl6hhj6TzvCYlHF5mVq6qQz49oTsFurFP7yINJzTjNddurEHG_GQCVsy4cqEO8ntD_m1WYi-/pub?gid=1154664784&single=true&output=csv';
     const SHEET_TIENDAS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVj5iUE5wOYEvbzeIKp1nIJwQ9gYbAPqK9KGid2hmsVxjHeL4OclmpwJDUoaKYJSCsN6K3IgCHHuQl/pub?gid=1184661297&single=true&output=csv';
 
+    // ESTRUCTURA ESTÁNDAR DE COLUMNAS PARA PLANTILLAS
+    const BULK_STRUCTURES = {
+      HQ: ['Numero de Serie', 'Responsable del activo', 'Mail', 'Direccion', 'Marca', 'Model', 'Tier Actual', 'FechaAlta'],
+      TIENDAS: ['Asset_ID', 'ID_Tienda', 'Tienda', 'Tipo_Equipo', 'Marca', 'Modelo', 'Estatus', 'FechaAlta'],
+      USUARIOS: ['ID_Empleado', 'Nombre', 'Mail', 'BU', 'Departamento', 'Puesto', 'Modalidad', 'FechaAlta'],
+      CELULARES: ['Numero', 'Area', 'Usuario', 'Mail', 'Plan', 'PagoMensual', 'TipoSim', 'Modelo', 'Estatus', 'FechaAlta']
+    };
+
     // BASE DE DATOS DIRECTA INCORPORADA PARA LÍNEAS DE CELULARES
     const globalCelularesDataset = [
       { Numero: "56 6757 8638", Usuario: "Ana Marlen Gonzalez Martinez", Mail: "marlen.gonzalez@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "9.8 GB / 9.9 GB", Modelo: "iPhone 13", FechaAlta: "2026-01-15", AdminCaptura: "guillermo.villanueva@benandfrank.com", FechaSistema: "2026-01-15 10:30:00" },
       { Numero: "56 5431 1371", Usuario: "Abril Desiree Lopez Biciego", Mail: "desiree.lopez@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "9.6 GB / 10 GB", Modelo: "Samsung Galaxy A54", FechaAlta: "2026-02-01", AdminCaptura: "edgar.rodriguez@benandfrank.com", FechaSistema: "2026-02-01 11:15:22" },
       { Numero: "56 5565 6279", Usuario: "Omar Ramos Mora", Mail: "omar.ramosm@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "9.3 GB / 10 GB", Modelo: "Samsung Galaxy A34", FechaAlta: "2026-02-10", AdminCaptura: "erick.gonzalez@benandfrank.com", FechaSistema: "2026-02-10 09:45:10" },
       { Numero: "56 5854 8357", Usuario: "Jose Javier Laguna Arzeta", Mail: "javier.lagunaa@benandfrank.com", Area: "Tech", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "2.9 GB / 5 GB", Modelo: "iPhone 14 Pro", FechaAlta: "2026-03-05", AdminCaptura: "javier.lagunaa@benandfrank.com", FechaSistema: "2026-03-05 14:20:00" },
-      { Numero: "56 6365 6743", Usuario: "Erick Gonzalez", Mail: "erick.gonzalez@benandfrank.com", Area: "Tech", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "5 GB / 5 GB", Modelo: "iPhone 13", FechaAlta: "2026-03-12", AdminCaptura: "erick.gonzalez@benandfrank.com", FechaSistema: "2026-03-12 16:05:44" },
-      { Numero: "56 5986 5971", Usuario: "Edgar Rodriguez", Mail: "edgar.rodriguez@benandfrank.com", Area: "Tech", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "7.4 GB / 9.5 GB", Modelo: "iPhone 14", FechaAlta: "2026-04-01", AdminCaptura: "edgar.rodriguez@benandfrank.com", FechaSistema: "2026-04-01 12:00:00" },
-      { Numero: "81 4625 5029", Usuario: "Eli Samuel Blanco Vazquez", Mail: "samuel.blanco@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "0.9 GB / 5 GB", Modelo: "Xiaomi Redmi Note 12", FechaAlta: "2026-04-18", AdminCaptura: "guillermo.villanueva@benandfrank.com", FechaSistema: "2026-04-18 17:30:11" },
-      { Numero: "56 5564 6605", Usuario: "Aline Veronica Bernal Cardona", Mail: "aline.bernal@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "9.5 GB / 10 GB", Modelo: "Samsung Galaxy A54", FechaAlta: "2026-05-02", AdminCaptura: "erick.gonzalez@benandfrank.com", FechaSistema: "2026-05-02 10:10:05" },
-      { Numero: "56 5564 8519", Usuario: "Erick Luna Gonzalez", Mail: "erick.luna@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "0 GB / 5 GB", Modelo: "Xiaomi Redmi Note 12", FechaAlta: "2026-05-10", AdminCaptura: "javier.lagunaa@benandfrank.com", FechaSistema: "2026-05-10 13:40:00" },
-      { Numero: "56 5433 3837", Usuario: "Eduardo Daniel Flores Contreras", Mail: "eduardo.flores@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "5.4 GB / 11 GB", Modelo: "Samsung Galaxy A34", FechaAlta: "2026-06-01", AdminCaptura: "guillermo.villanueva@benandfrank.com", FechaSistema: "2026-06-01 09:12:30" }
+      { Numero: "56 6365 6743", Usuario: "Erick Gonzalez", Mail: "erick.gonzalez@benandfrank.com", Area: "Tech", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "5 GB / 5 GB", Modelo: "iPhone 13", FechaAlta: "2026-03-12", AdminCaptura: "erick.gonzalez@benandfrank.com", FechaSistema: "2026-03-12 16:05:44" }
     ];
 
     // CUENTAS AUTORIZADAS Y BU REQUERIDA PARA PERMISOS DE EDICIÓN
@@ -391,6 +449,9 @@
         document.getElementById('mainBtnNuevo').classList.remove('hidden');
         document.getElementById('sidebarBtnNuevo').classList.remove('hidden');
         document.getElementById('sidebarBtnNuevo').classList.add('flex');
+        document.getElementById('mainBtnBulk').classList.remove('hidden');
+        document.getElementById('sidebarBtnBulk').classList.remove('hidden');
+        document.getElementById('sidebarBtnBulk').classList.add('flex');
         document.getElementById('adminNavSection').classList.remove('hidden');
         selector.disabled = false;
         switchDataset('HQ');
@@ -399,6 +460,8 @@
         badge.className = 'text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.2 rounded uppercase font-mono';
         document.getElementById('mainBtnNuevo').classList.add('hidden');
         document.getElementById('sidebarBtnNuevo').classList.add('hidden');
+        document.getElementById('mainBtnBulk').classList.add('hidden');
+        document.getElementById('sidebarBtnBulk').classList.add('hidden');
         document.getElementById('adminNavSection').classList.add('hidden');
 
         if (bu === 'Retail' || bu === 'Operaciones') {
@@ -425,6 +488,95 @@
       };
       auditLogs.unshift(logEntry);
       localStorage.setItem('galileo_audit_logs', JSON.stringify(auditLogs.slice(0, 200)));
+    }
+
+    function openBulkModal() {
+      if (!isAdmin) return;
+      document.getElementById('bulkModal').classList.remove('hidden');
+      updateBulkTemplateInfo();
+    }
+
+    function closeBulkModal() {
+      document.getElementById('bulkModal').classList.add('hidden');
+      document.getElementById('bulkFileInput').value = '';
+    }
+
+    function updateBulkTemplateInfo() {
+      const target = document.getElementById('bulkDatasetTarget').value;
+      const cols = BULK_STRUCTURES[target];
+      document.getElementById('bulkTemplateColsList').innerText = cols.join(' | ');
+    }
+
+    function downloadBulkTemplate() {
+      const target = document.getElementById('bulkDatasetTarget').value;
+      const cols = BULK_STRUCTURES[target];
+      
+      const csvContent = cols.join(',') + '\n';
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Plantilla_Galileo_${target}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function processBulkUpload() {
+      if (!isAdmin) return;
+      
+      const fileInput = document.getElementById('bulkFileInput');
+      const target = document.getElementById('bulkDatasetTarget').value;
+
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Por favor selecciona un archivo CSV.');
+        return;
+      }
+
+      const file = fileInput.files[0];
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          const parsedData = results.data;
+          const expectedCols = BULK_STRUCTURES[target];
+
+          if (parsedData.length === 0) {
+            alert('El archivo no contiene filas de datos.');
+            return;
+          }
+
+          const fileCols = Object.keys(parsedData[0]);
+          const missingCols = expectedCols.filter(c => !fileCols.includes(c));
+
+          if (missingCols.length > 0) {
+            alert(`Error de estructura en el archivo. Faltan las siguientes columnas obligatorias: ${missingCols.join(', ')}`);
+            return;
+          }
+
+          const now = new Date();
+          const fechaSistemaFormatted = now.toLocaleString('es-MX');
+          const adminMail = currentUser ? currentUser.mail : 'admin@benandfrank.com';
+
+          const processedRows = parsedData.map((row, idx) => ({
+            ...row,
+            _rowIndex: globalData.length + idx,
+            FechaAlta: row['FechaAlta'] || now.toISOString().slice(0, 10),
+            FechaSistema: fechaSistemaFormatted,
+            AdminCaptura: adminMail
+          }));
+
+          if (target === currentDataset || (target === 'HQ' && currentDataset === 'HQ') || (target === 'TIENDAS' && currentDataset === 'TIENDAS') || (target === 'CELULARES' && currentDataset === 'CELULARES')) {
+            globalData = [...globalData, ...processedRows];
+          }
+
+          logAction('CARGA_MASIVA', `Carga masiva completada en base ${target}. Archivo: ${file.name} | ${processedRows.length} registros cargados | Admin: ${adminMail}`);
+          
+          closeBulkModal();
+          applyFilters();
+          alert(`¡Carga masiva procesada con éxito! Se añadieron ${processedRows.length} registros a la base de ${target}.`);
+        }
+      });
     }
 
     function switchDataset(datasetKey) {
