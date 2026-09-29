@@ -755,7 +755,6 @@
       }).filter(item => item['Mail'] || item['Responsable del activo'] || item['Numero de Serie']);
     }
 
-    // PARSEO DE TIENDAS CORREGIDO (ID TIENDA ÚNICO X SUCURSAL + TIPO EQUIPO NORMALIZADO)
     function parseTiendasData(rawRows) {
       let headerIndex = rawRows.findIndex(row => row.some(cell => 
         String(cell).toLowerCase().includes('tienda') || 
@@ -779,13 +778,9 @@
         const tiendaNombre = rawObj['Tienda'] || rawObj['Sucursal'] || rawObj['Ubicacion'] || 'San Angel';
         const tiendaKey = tiendaNombre.toLowerCase().trim();
         
-        // 1. Asignar un ID de Tienda ÚNICO y consistente por Sucursal
         const idTiendaUnico = rawObj['ID Tienda'] || rawObj['Código'] || TIENDA_ID_MAP[tiendaKey] || `TDA-${tiendaNombre.substring(0,4).toUpperCase()}`;
-
-        // 2. Extraer el identificador único del activo (Serie o Clave)
         const assetId = rawObj['Serie'] || rawObj['N/S'] || rawObj['clave'] || rawObj['Asset ID'] || `AST-${idx+100}`;
 
-        // 3. Normalizar el Tipo de Equipo
         const rawTipo = rawObj['Producto'] || rawObj['Equipo'] || rawObj['Tipo'] || 'iPad';
         const tipoEquipoNorm = normalizeTipoEquipo(rawTipo);
 
@@ -1923,6 +1918,7 @@
             <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Nombre Tienda</label><input type="text" id="formTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: San Angel"></div>
             <div><label class="block text-slate-400 mb-1 font-bold text-emerald-400">Tipo de Equipo</label><input type="text" id="formTipo" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad / Access Point"></div>
             <div><label class="block text-slate-400 mb-1 font-bold text-cyan-400">Marca</label><input type="text" id="formMarcaTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Apple / Lenovo"></div>
+            <div><label class="block text-slate-400 mb-1 font-bold text-white">Modelo</label><input type="text" id="formModeloTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad mini 4 / MR18"></div>
             <div><label class="block text-slate-400 mb-1 font-bold text-amber-400">Fecha de Alta (Captura Admin)</label><input type="date" id="formFechaAlta" value="${todayIso}" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"></div>
           `;
         }
@@ -1986,6 +1982,7 @@
 
     function closeModal() { document.getElementById('assetModal').classList.add('hidden'); }
 
+    // GUARDADO DE REGISTROS CORREGIDO Y SYNCRONIZADO
     function saveAsset(e) {
       e.preventDefault();
       if (!isAdmin) return;
@@ -2033,12 +2030,34 @@
         }
         logAction('EDICION', `Modificación en dataset ${currentDataset}. Fecha Alta Capturada: ${fechaAltaCapturada} | Fecha/Hora Sistema: ${fechaSistemaFormatted} | Admin: ${adminMail}`);
       } else {
+        // LÓGICA DE ALTA DE NUEVO REGISTRO EN TIENDAS
+        if (currentDataset === 'TIENDAS') {
+          const rawTipo = document.getElementById('formTipo')?.value || 'iPad';
+          const tiendaVal = document.getElementById('formTienda')?.value || 'San Angel';
+          const tiendaKey = tiendaVal.toLowerCase().trim();
+
+          const newItem = {
+            _rowIndex: globalData.length,
+            'Asset_ID': document.getElementById('formAssetID')?.value || `AST-${Date.now()}`,
+            'ID_Tienda': document.getElementById('formIDTienda')?.value || TIENDA_ID_MAP[tiendaKey] || `TDA-${tiendaVal.substring(0,4).toUpperCase()}`,
+            'Tienda': tiendaVal,
+            'Tipo_Equipo': normalizeTipoEquipo(rawTipo),
+            'Marca': document.getElementById('formMarcaTienda')?.value || 'Genérico',
+            'Modelo': document.getElementById('formModeloTienda')?.value || 'Estándar',
+            'Estatus': 'Activo',
+            'FechaAlta': fechaAltaCapturada,
+            'FechaSistema': fechaSistemaFormatted,
+            'AdminCaptura': adminMail
+          };
+          globalData.unshift(newItem);
+        }
         logAction('ALTA_REGISTRO', `Nuevo registro (${type}). Fecha Alta Capturada: ${fechaAltaCapturada} | Fecha/Hora Sistema: ${fechaSistemaFormatted} | Admin: ${adminMail}`);
       }
 
+      populateFilterDropdowns(globalData);
       applyFilters();
       closeModal();
-      alert(isEdit ? '¡Registro actualizado y respaldado en Log de Auditoría!' : `¡Registro (${type}) capturado con éxito!`);
+      alert(isEdit ? '¡Registro actualizado con éxito!' : `¡Nuevo registro capturado con éxito!`);
     }
 
     function exportCSV() {
