@@ -261,7 +261,7 @@
     </div>
   </div>
 
-  <!-- MODAL MULTI-PLANTILLA DE CAPTURA -->
+  <!-- MODAL MULTI-PLANTILLA DE CAPTURA / EDICIÓN -->
   <div id="assetModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
     <div class="bg-panel border border-rocker rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col">
       <div class="p-4 border-b border-rocker flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#0f1115]">
@@ -367,7 +367,13 @@
       { Numero: "237 126 1011", Usuario: "Alma Berenice Hernández De la Cruz", Mail: "-", Area: "General", Plan: "-", PagoMensual: "$0 MXN", TipoSim: "SIM", Estatus: "Suspendido", Datos: "-" }
     ];
 
-    const ADMIN_EMAILS = ['guillermo.villanueva@benandfrank.com', 'edgar.rodriguez@benandfrank.com'];
+    // CUENTAS AUTORIZADAS Y BU REQUERIDA PARA PERMISOS DE EDICIÓN
+    const ADMIN_EMAILS = [
+      'guillermo.villanueva@benandfrank.com',
+      'edgar.rodriguez@benandfrank.com',
+      'erick.gonzalez@benandfrank.com',
+      'javier.lagunaa@benandfrank.com'
+    ];
     const ADMIN_BU = 'Tech';
 
     let currentDataset = 'HQ';
@@ -900,19 +906,27 @@
             <th class="p-3">Modelo</th>
             <th class="p-3 font-mono">Serie</th>
             <th class="p-3 text-center">Vida Rem.</th>
+            <th class="p-3 text-center">Acción</th>
           </tr>
         `;
 
-        tableBody.innerHTML = matchedItems.map(row => `
-          <tr class="bg-panel-hover transition-colors">
-            <td class="p-3 font-semibold text-white">${row['Responsable del activo'] || 'N/A'}</td>
-            <td class="p-3 text-slate-400 font-mono text-[11px]">${row['Mail'] || 'N/A'}</td>
-            <td class="p-3 text-slate-400">${(row['Direccion'] || 'N/A').trim()}</td>
-            <td class="p-3 font-medium text-slate-200">${row['Marca'] || ''} ${row['Model'] || row['Tipo'] || ''}</td>
-            <td class="p-3 font-mono text-slate-400 text-[11px]">${row['Numero de Serie'] || 'N/A'}</td>
-            <td class="p-3 text-center font-bold text-white">${row['Años de Vida Remanente'] ?? 'N/D'}</td>
-          </tr>
-        `).join('');
+        tableBody.innerHTML = matchedItems.map(row => {
+          const actionBtn = isAdmin
+            ? `<button onclick="editAsset(${row._rowIndex})" class="text-blue-400 hover:text-white border border-blue-500/30 px-2.5 py-1 rounded hover:bg-blue-600/20 transition text-[10px]">Editar</button>`
+            : `<span class="text-slate-600 text-[10px]">Solo Lectura</span>`;
+
+          return `
+            <tr class="bg-panel-hover transition-colors">
+              <td class="p-3 font-semibold text-white">${row['Responsable del activo'] || 'N/A'}</td>
+              <td class="p-3 text-slate-400 font-mono text-[11px]">${row['Mail'] || 'N/A'}</td>
+              <td class="p-3 text-slate-400">${(row['Direccion'] || 'N/A').trim()}</td>
+              <td class="p-3 font-medium text-slate-200">${row['Marca'] || ''} ${row['Model'] || row['Tipo'] || ''}</td>
+              <td class="p-3 font-mono text-slate-400 text-[11px]">${row['Numero de Serie'] || 'N/A'}</td>
+              <td class="p-3 text-center font-bold text-white">${row['Años de Vida Remanente'] ?? 'N/D'}</td>
+              <td class="p-3 text-center">${actionBtn}</td>
+            </tr>
+          `;
+        }).join('');
 
       } else if (currentDataset === 'TIENDAS') {
         if (categoryType === 'tienda') {
@@ -929,19 +943,27 @@
             <th class="p-3 font-bold text-cyan-400">Ubicación Operativa</th>
             <th class="p-3 font-bold text-emerald-400">Tipo Equipo</th>
             <th class="p-3 font-mono">Red</th>
+            <th class="p-3 text-center">Acción</th>
           </tr>
         `;
 
-        tableBody.innerHTML = matchedItems.map(row => `
-          <tr class="bg-panel-hover transition-colors">
-            <td class="p-3 font-bold text-blue-400 font-mono">${row['Asset_ID']}</td>
-            <td class="p-3 font-mono font-bold text-indigo-300">${row['ID_Tienda']}</td>
-            <td class="p-3 font-semibold text-purple-300">${row['Tienda']}</td>
-            <td class="p-3 text-cyan-400 font-medium">${row['Ub_Operativa']}</td>
-            <td class="p-3 font-bold text-emerald-400">${row['Tipo_Equipo']}</td>
-            <td class="p-3 font-mono text-slate-400 text-[11px]">${row['Red']}</td>
-          </tr>
-        `).join('');
+        tableBody.innerHTML = matchedItems.map(row => {
+          const actionBtn = isAdmin
+            ? `<button onclick="editAsset(${row._rowIndex})" class="text-blue-400 hover:text-white border border-blue-500/30 px-2.5 py-1 rounded hover:bg-blue-600/20 transition text-[10px]">Editar</button>`
+            : `<span class="text-slate-600 text-[10px]">Solo Lectura</span>`;
+
+          return `
+            <tr class="bg-panel-hover transition-colors">
+              <td class="p-3 font-bold text-blue-400 font-mono">${row['Asset_ID']}</td>
+              <td class="p-3 font-mono font-bold text-indigo-300">${row['ID_Tienda']}</td>
+              <td class="p-3 font-semibold text-purple-300">${row['Tienda']}</td>
+              <td class="p-3 text-cyan-400 font-medium">${row['Ub_Operativa']}</td>
+              <td class="p-3 font-bold text-emerald-400">${row['Tipo_Equipo']}</td>
+              <td class="p-3 font-mono text-slate-400 text-[11px]">${row['Red']}</td>
+              <td class="p-3 text-center">${actionBtn}</td>
+            </tr>
+          `;
+        }).join('');
       } else if (currentDataset === 'CELULARES') {
         if (categoryType === 'area') {
           matchedItems = globalData.filter(d => (d['Area'] || 'General').trim() === labelValue);
@@ -957,19 +979,27 @@
             <th class="p-3 text-slate-400 font-mono">Mail</th>
             <th class="p-3 font-bold text-emerald-400">Precio Mensual</th>
             <th class="p-3">Plan</th>
+            <th class="p-3 text-center">Acción</th>
           </tr>
         `;
 
-        tableBody.innerHTML = matchedItems.map(row => `
-          <tr class="bg-panel-hover transition-colors">
-            <td class="p-3 font-bold text-blue-400 font-mono">${row['Numero']}</td>
-            <td class="p-3 font-semibold text-indigo-300">${row['Area']}</td>
-            <td class="p-3 text-white font-medium">${row['Usuario']}</td>
-            <td class="p-3 text-slate-400 font-mono text-[11px]">${row['Mail']}</td>
-            <td class="p-3 text-emerald-400 font-bold">${row['PagoMensual']}</td>
-            <td class="p-3 text-slate-200">${row['Plan']}</td>
-          </tr>
-        `).join('');
+        tableBody.innerHTML = matchedItems.map(row => {
+          const actionBtn = isAdmin
+            ? `<button onclick="editAsset(${row._rowIndex})" class="text-blue-400 hover:text-white border border-blue-500/30 px-2.5 py-1 rounded hover:bg-blue-600/20 transition text-[10px]">Editar</button>`
+            : `<span class="text-slate-600 text-[10px]">Solo Lectura</span>`;
+
+          return `
+            <tr class="bg-panel-hover transition-colors">
+              <td class="p-3 font-bold text-blue-400 font-mono">${row['Numero']}</td>
+              <td class="p-3 font-semibold text-indigo-300">${row['Area']}</td>
+              <td class="p-3 text-white font-medium">${row['Usuario']}</td>
+              <td class="p-3 text-slate-400 font-mono text-[11px]">${row['Mail']}</td>
+              <td class="p-3 text-emerald-400 font-bold">${row['PagoMensual']}</td>
+              <td class="p-3 text-slate-200">${row['Plan']}</td>
+              <td class="p-3 text-center">${actionBtn}</td>
+            </tr>
+          `;
+        }).join('');
       }
 
       if (matchedItems.length === 0) {
@@ -1163,7 +1193,6 @@
       if (chartObj4) chartObj4.destroy();
 
       if (currentDataset === 'HQ') {
-        // Rediseño a 4 gráficos en HQ Corporativo
         container.innerHTML = `
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
@@ -1583,10 +1612,55 @@
       }
     }
 
+    function editAsset(rowIndex) {
+      if (!isAdmin) return;
+
+      const item = globalData.find(d => d._rowIndex === rowIndex);
+      if (!item) return;
+
+      document.getElementById('editRowIndex').value = rowIndex;
+      document.getElementById('modalTitle').innerText = 'Editar Registro';
+
+      if (currentDataset === 'HQ') {
+        openModal('EQUIPO');
+        setTimeout(() => {
+          if (document.getElementById('formSerie')) document.getElementById('formSerie').value = item['Numero de Serie'] || '';
+          if (document.getElementById('formResponsable')) document.getElementById('formResponsable').value = item['Responsable del activo'] || '';
+          if (document.getElementById('formMail')) document.getElementById('formMail').value = item['Mail'] || '';
+          if (document.getElementById('formDireccion')) document.getElementById('formDireccion').value = item['Direccion'] || '';
+          if (document.getElementById('formModelo')) document.getElementById('formModelo').value = `${item['Marca'] || ''} ${item['Model'] || item['Tipo'] || ''}`.trim();
+          if (document.getElementById('formTier')) document.getElementById('formTier').value = item['Tier Actual'] || 'Tier 2';
+        }, 50);
+      } else if (currentDataset === 'TIENDAS') {
+        openModal('EQUIPO');
+        setTimeout(() => {
+          if (document.getElementById('formAssetID')) document.getElementById('formAssetID').value = item['Asset_ID'] || '';
+          if (document.getElementById('formIDTienda')) document.getElementById('formIDTienda').value = item['ID_Tienda'] || '';
+          if (document.getElementById('formTienda')) document.getElementById('formTienda').value = item['Tienda'] || '';
+          if (document.getElementById('formUbOp')) document.getElementById('formUbOp').value = item['Ub_Operativa'] || '';
+          if (document.getElementById('formTipo')) document.getElementById('formTipo').value = item['Tipo_Equipo'] || '';
+          if (document.getElementById('formRed')) document.getElementById('formRed').value = item['Red'] || '';
+        }, 50);
+      } else if (currentDataset === 'CELULARES') {
+        openModal('CELULAR');
+        setTimeout(() => {
+          if (document.getElementById('formNumCelular')) document.getElementById('formNumCelular').value = item['Numero'] || '';
+          if (document.getElementById('formAreaCel')) document.getElementById('formAreaCel').value = item['Area'] || '';
+          if (document.getElementById('formUsuarioCel')) document.getElementById('formUsuarioCel').value = item['Usuario'] || '';
+          if (document.getElementById('formMailCel')) document.getElementById('formMailCel').value = item['Mail'] || '';
+          if (document.getElementById('formPagoMensual')) document.getElementById('formPagoMensual').value = item['PagoMensual'] || '';
+          if (document.getElementById('formPlanCel')) document.getElementById('formPlanCel').value = item['Plan'] || '';
+          if (document.getElementById('formTipoSim')) document.getElementById('formTipoSim').value = item['TipoSim'] || 'SIM';
+        }, 50);
+      }
+    }
+
     function openModal(defaultType = 'EQUIPO') {
       if (!isAdmin) return;
       document.getElementById('assetModal').classList.remove('hidden');
       document.getElementById('templateTypeSelector').value = defaultType;
+      document.getElementById('modalTitle').innerText = 'Capturar Nuevo Registro';
+      document.getElementById('editRowIndex').value = '';
       renderModalForm(defaultType);
     }
 
@@ -1597,11 +1671,45 @@
       if (!isAdmin) return;
       
       const type = document.getElementById('templateTypeSelector').value;
-      
-      logAction('ALTA_REGISTRO', `Nuevo registro capturado usando la plantilla: ${type}`);
+      const editIndex = document.getElementById('editRowIndex').value;
+      const isEdit = editIndex !== '';
+
+      if (isEdit) {
+        const idx = parseInt(editIndex);
+        const item = globalData.find(d => d._rowIndex === idx);
+        
+        if (item) {
+          if (currentDataset === 'HQ') {
+            item['Numero de Serie'] = document.getElementById('formSerie')?.value || item['Numero de Serie'];
+            item['Responsable del activo'] = document.getElementById('formResponsable')?.value || item['Responsable del activo'];
+            item['Mail'] = document.getElementById('formMail')?.value || item['Mail'];
+            item['Direccion'] = document.getElementById('formDireccion')?.value || item['Direccion'];
+            item['Tier Actual'] = document.getElementById('formTier')?.value || item['Tier Actual'];
+          } else if (currentDataset === 'TIENDAS') {
+            item['Asset_ID'] = document.getElementById('formAssetID')?.value || item['Asset_ID'];
+            item['ID_Tienda'] = document.getElementById('formIDTienda')?.value || item['ID_Tienda'];
+            item['Tienda'] = document.getElementById('formTienda')?.value || item['Tienda'];
+            item['Ub_Operativa'] = document.getElementById('formUbOp')?.value || item['Ub_Operativa'];
+            item['Tipo_Equipo'] = document.getElementById('formTipo')?.value || item['Tipo_Equipo'];
+            item['Red'] = document.getElementById('formRed')?.value || item['Red'];
+          } else if (currentDataset === 'CELULARES') {
+            item['Numero'] = document.getElementById('formNumCelular')?.value || item['Numero'];
+            item['Area'] = document.getElementById('formAreaCel')?.value || item['Area'];
+            item['Usuario'] = document.getElementById('formUsuarioCel')?.value || item['Usuario'];
+            item['Mail'] = document.getElementById('formMailCel')?.value || item['Mail'];
+            item['PagoMensual'] = document.getElementById('formPagoMensual')?.value || item['PagoMensual'];
+            item['Plan'] = document.getElementById('formPlanCel')?.value || item['Plan'];
+            item['TipoSim'] = document.getElementById('formTipoSim')?.value || item['TipoSim'];
+          }
+        }
+        logAction('EDICION', `Edición de registro realizada en ${currentDataset}`);
+      } else {
+        logAction('ALTA_REGISTRO', `Nuevo registro capturado usando la plantilla: ${type}`);
+      }
+
       applyFilters();
       closeModal();
-      alert(`¡Registro de tipo ${type} capturado con éxito!`);
+      alert(isEdit ? '¡Registro actualizado con éxito!' : `¡Registro de tipo ${type} capturado con éxito!`);
     }
 
     function exportCSV() {
