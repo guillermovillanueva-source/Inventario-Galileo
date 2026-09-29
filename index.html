@@ -353,6 +353,16 @@
     const SHEET_HQ_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6O7VuFl6hhj6TzvCYlHF5mVq6qQz49oTsFurFP7yINJzTjNddurEHG_GQCVsy4cqEO8ntD_m1WYi-/pub?gid=1154664784&single=true&output=csv';
     const SHEET_TIENDAS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVj5iUE5wOYEvbzeIKp1nIJwQ9gYbAPqK9KGid2hmsVxjHeL4OclmpwJDUoaKYJSCsN6K3IgCHHuQl/pub?gid=1184661297&single=true&output=csv';
 
+    // MAPEO NORMALIZADO DE IDS ÚNICOS POR TIENDA / SUCURSAL (NO INCREMENTAL)
+    const TIENDA_ID_MAP = {
+      'san angel': 'TDA-SANA',
+      'condesa': 'TDA-COND',
+      'satelite': 'TDA-SATE',
+      'plaza satelite': 'TDA-SATE',
+      'via vallejo': 'TDA-VIVA',
+      'interlomas': 'TDA-INTE'
+    };
+
     // ESTRUCTURA ESTÁNDAR DE COLUMNAS PARA PLANTILLAS
     const BULK_STRUCTURES = {
       HQ: ['Numero de Serie', 'Responsable del activo', 'Mail', 'Direccion', 'Marca', 'Model', 'Tier Actual', 'FechaAlta'],
@@ -711,6 +721,7 @@
       }).filter(item => item['Mail'] || item['Responsable del activo'] || item['Numero de Serie']);
     }
 
+    // PARSEO CORREGIDO CON ID DE TIENDA ÚNICO X SUCURSAL
     function parseTiendasData(rawRows) {
       let headerIndex = rawRows.findIndex(row => row.some(cell => 
         String(cell).toLowerCase().includes('tienda') || 
@@ -731,24 +742,31 @@
           rawObj[h] = row[i] ? String(row[i]).trim() : '';
         });
 
-        const tienda = rawObj['Tienda'] || rawObj['Sucursal'] || rawObj['Ubicacion'] || 'San Angel';
-        const idTienda = rawObj['ID Tienda'] || rawObj['Código'] || `TDA-${String(idx+1).padStart(3, '0')}`;
+        const tiendaNombre = rawObj['Tienda'] || rawObj['Sucursal'] || rawObj['Ubicacion'] || 'San Angel';
+        const tiendaKey = tiendaNombre.toLowerCase().trim();
+        
+        // 1. Asignar un ID de Tienda ÚNICO y consistente por Sucursal
+        const idTiendaUnico = rawObj['ID Tienda'] || rawObj['Código'] || TIENDA_ID_MAP[tiendaKey] || `TDA-${tiendaNombre.substring(0,4).toUpperCase()}`;
+
+        // 2. Extraer el identificador único del activo (Serie o Clave)
+        const assetId = rawObj['Serie'] || rawObj['N/S'] || rawObj['clave'] || rawObj['Asset ID'] || `AST-${idx+100}`;
+
         const tipoEquipo = rawObj['Producto'] || rawObj['Equipo'] || rawObj['Tipo'] || 'iPad';
         const marca = rawObj['Marca'] || (tipoEquipo.toLowerCase().includes('ipad') || tipoEquipo.toLowerCase().includes('mac') ? 'Apple' : tipoEquipo.toLowerCase().includes('laptop') ? 'Lenovo' : 'Genérico');
-        const modelo = rawObj['Modelo'] || (tipoEquipo.toLowerCase().includes('ipad') ? 'iPad Air (5th Gen)' : tipoEquipo.toLowerCase().includes('laptop') ? 'ThinkPad T14' : 'Estándar POS');
+        const modelo = rawObj['Modelo'] || rawObj['Modelo '] || 'Estándar POS';
         const estatus = rawObj['Estatus'] || 'Activo';
 
         return {
           _rowIndex: idx,
-          'Asset_ID': rawObj['Serie'] || rawObj['Asset ID'] || rawObj['Numero de Serie'] || `AST-${idx+100}`,
-          'Tienda': tienda,
-          'ID_Tienda': idTienda,
+          'Asset_ID': assetId,          // Único por Equipo (Serie/Clave)
+          'ID_Tienda': idTiendaUnico,   // Único por Sucursal (Compartido entre equipos de la misma sede)
+          'Tienda': tiendaNombre,
           'Tipo_Equipo': tipoEquipo,
           'Marca': marca,
           'Modelo': modelo,
           'Estatus': estatus
         };
-      }).filter(item => item['Tienda']);
+      }).filter(item => item['Tienda'] && item['Asset_ID']);
     }
 
     function renderFilterControls() {
@@ -1823,8 +1841,8 @@
 
       if (templateType === 'TIENDA') {
         formContainer.innerHTML = `
-          <div><label class="block text-slate-400 mb-1 font-bold text-indigo-400">ID / Código Tienda</label><input type="text" id="formIDTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: TDA-045"></div>
-          <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Nombre de la Sede</label><input type="text" id="formTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Tienda Condesa"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-indigo-400">ID / Código Tienda</label><input type="text" id="formIDTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: TDA-SANA"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Nombre de la Sede</label><input type="text" id="formTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: San Angel"></div>
           <div><label class="block text-slate-400 mb-1 font-bold text-emerald-400">Tipo de Equipo</label><input type="text" id="formTipo" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad POS / Laptop"></div>
           <div><label class="block text-slate-400 mb-1 font-bold text-cyan-400">Marca</label><input type="text" id="formMarcaTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Apple / Lenovo"></div>
           <div><label class="block text-slate-400 mb-1 font-bold text-white">Modelo</label><input type="text" id="formModeloTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad Air M1 / ThinkPad T14"></div>
@@ -1864,8 +1882,8 @@
         } else {
           formContainer.innerHTML = `
             <div><label class="block text-slate-400 mb-1 font-bold text-blue-400">Serie / Asset ID</label><input type="text" id="formAssetID" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: F9FRK2PYGHK9"></div>
-            <div><label class="block text-slate-400 mb-1 font-bold text-indigo-400">ID Tienda</label><input type="text" id="formIDTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: TDA-001"></div>
-            <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Nombre Tienda</label><input type="text" id="formTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Condesa"></div>
+            <div><label class="block text-slate-400 mb-1 font-bold text-indigo-400">ID Tienda</label><input type="text" id="formIDTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: TDA-SANA"></div>
+            <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Nombre Tienda</label><input type="text" id="formTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: San Angel"></div>
             <div><label class="block text-slate-400 mb-1 font-bold text-emerald-400">Tipo de Equipo</label><input type="text" id="formTipo" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: iPad POS / Impresora"></div>
             <div><label class="block text-slate-400 mb-1 font-bold text-cyan-400">Marca</label><input type="text" id="formMarcaTienda" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Apple / Lenovo"></div>
             <div><label class="block text-slate-400 mb-1 font-bold text-amber-400">Fecha de Alta (Captura Admin)</label><input type="date" id="formFechaAlta" value="${todayIso}" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"></div>
