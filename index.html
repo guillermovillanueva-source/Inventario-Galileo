@@ -296,9 +296,75 @@
   <script>
     const SHEET_HQ_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6O7VuFl6hhj6TzvCYlHF5mVq6qQz49oTsFurFP7yINJzTjNddurEHG_GQCVsy4cqEO8ntD_m1WYi-/pub?gid=1154664784&single=true&output=csv';
     const SHEET_TIENDAS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVj5iUE5wOYEvbzeIKp1nIJwQ9gYbAPqK9KGid2hmsVxjHeL4OclmpwJDUoaKYJSCsN6K3IgCHHuQl/pub?gid=1184661297&single=true&output=csv';
-    
-    // URL CSV directa a la hoja publicada "Lineas Galileo":
-    const SHEET_CELULARES_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJCZJ-BeOcKWvaJXYWybMCABW_1doHHhcJ2xBB267TSIm2560_B9nWapewC6CcLP1bnS-bWVNCPMsH/pub?gid=0&single=true&output=csv'; 
+
+    // BASE DE DATOS DIRECTA INCORPORADA PARA LÍNEAS DE CELULARES
+    const globalCelularesDataset = [
+      { Numero: "56 6757 8638", Usuario: "Ana Marlen Gonzalez Martinez", Mail: "marlen.gonzalez@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "9.8 GB / 9.9 GB" },
+      { Numero: "56 5431 1371", Usuario: "Abril Desiree Lopez Biciego", Mail: "desiree.lopez@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "9.6 GB / 10 GB" },
+      { Numero: "56 5565 6279", Usuario: "Omar Ramos Mora", Mail: "omar.ramosm@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "9.3 GB / 10 GB" },
+      { Numero: "56 5854 8357", Usuario: "Jose Javier Laguna Arzeta", Mail: "javier.lagunaa@benandfrank.com", Area: "Tech", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "2.9 GB / 5 GB" },
+      { Numero: "56 6365 6743", Usuario: "Erick Gonzalez", Mail: "erick.gonzalez@benandfrank.com", Area: "Tech", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "5 GB / 5 GB" },
+      { Numero: "56 5986 5971", Usuario: "Edgar Rodriguez", Mail: "edgar.rodriguez@benandfrank.com", Area: "Tech", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "7.4 GB / 9.5 GB" },
+      { Numero: "81 4625 5029", Usuario: "Eli Samuel Blanco Vazquez", Mail: "samuel.blanco@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "0.9 GB / 5 GB" },
+      { Numero: "56 5564 6605", Usuario: "Aline Veronica Bernal Cardona", Mail: "aline.bernal@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "9.5 GB / 10 GB" },
+      { Numero: "56 5564 8519", Usuario: "Erick Luna Gonzalez", Mail: "erick.luna@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "0 GB / 5 GB" },
+      { Numero: "56 5433 3837", Usuario: "Eduardo Daniel Flores Contreras", Mail: "eduardo.flores@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "5.4 GB / 11 GB" },
+      { Numero: "56 5565 6305", Usuario: "Omar Ronaldo Betancourt Miranda", Mail: "omar.betancourt@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "3.4 GB / 6.9 GB" },
+      { Numero: "56 5976 0345", Usuario: "Cesar Pazaran Aguilar", Mail: "cesar.pazaran@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "9.3 GB / 10 GB" },
+      { Numero: "56 6212 4888", Usuario: "Sin asignar", Mail: "-", Area: "General", Plan: "Plan 55 GB", PagoMensual: "$799 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "109.7 GB / 110 GB" },
+      { Numero: "56 6583 2271", Usuario: "Celeste Idali Gurrola Aguilar", Mail: "cel.gurrola@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "9.8 GB / 10 GB" },
+      { Numero: "56 5977 4835", Usuario: "Dulce Johanna De la Rosa Sotelo", Mail: "dulce.delarosa@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "9.8 GB / 10 GB" },
+      { Numero: "56 6386 0358", Usuario: "Blanca Liliana Cervantes Diaz", Mail: "liliana.cervantes@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "7.2 GB / 8.4 GB" },
+      { Numero: "56 6352 5545", Usuario: "Nitze Montserrat Melendez Peralta", Mail: "nitze.melendez@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "7.5 GB / 10 GB" },
+      { Numero: "56 5995 7499", Usuario: "Maira Séptimo Velazquez", Mail: "maira.septimo@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "5.2 GB / 10 GB" },
+      { Numero: "56 5835 4583", Usuario: "Oscar Leonardo Guerrero Campos", Mail: "oscar.guerrero@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "2.5 GB / 5 GB" },
+      { Numero: "56 5430 3261", Usuario: "Susana Pamela Jiménez Morales", Mail: "pamela.jimenez@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "2.4 GB / 6.9 GB" },
+      { Numero: "56 6060 6120", Usuario: "Alexis Ruben Gonzalez Moreno", Mail: "-", Area: "RH", Plan: "-", PagoMensual: "$0 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "-" },
+      { Numero: "56 6360 7232", Usuario: "Dulce Andrea Flores Rodríguez", Mail: "dulce.flores@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "9.6 GB / 10 GB" },
+      { Numero: "56 6211 1220", Usuario: "Adrián Pineda Vázquez", Mail: "adrian.pineda@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "9.8 GB / 10 GB" },
+      { Numero: "56 5976 6658", Usuario: "Giovanna Patricia Orozco Gonzalez", Mail: "giovanna.orozco@benandfrank.com", Area: "Mantenimiento", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "3.9 GB / 5 GB" },
+      { Numero: "56 5899 1851", Usuario: "Tania Rios Navarrete", Mail: "tania.rios@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "1.6 GB / 5 GB" },
+      { Numero: "56 5926 8457", Usuario: "Yessica Chantal Huesca Hernández", Mail: "chantal.huesca@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "9.5 GB / 10 GB" },
+      { Numero: "56 2328 4279", Usuario: "Lyzzet Martinez Romero", Mail: "lyzzet.martinez@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "0 GB / 5 GB" },
+      { Numero: "56 5893 4533", Usuario: "Guillermo Valencia Rosas", Mail: "guillermo.valencia@benandfrank.com", Area: "Construccion", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "9.3 GB / 10 GB" },
+      { Numero: "56 5565 6706", Usuario: "Rafael Villa Maldonado", Mail: "rafael.villa@benandfrank.com", Area: "Mantenimiento", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "5.4 GB / 6.7 GB" },
+      { Numero: "56 5564 7435", Usuario: "Carlos Leonel Ramírez Cortés", Mail: "leonel.ramirez@benandfrank.com", Area: "Operaciones", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "9.5 GB / 10 GB" },
+      { Numero: "56 5974 9810", Usuario: "Diego Manuel Avalos Barajas", Mail: "diego.barajas@benandfrank.com", Area: "Mantenimiento", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "3.3 GB / 5 GB" },
+      { Numero: "56 6054 1199", Usuario: "Alejandra Noemi Gonzalez Ramírez", Mail: "noemi.gonzalez@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "9.3 GB / 10 GB" },
+      { Numero: "56 5923 3669", Usuario: "Alejandro Perea Delgado", Mail: "alejandro.perea@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "9.8 GB / 10 GB" },
+      { Numero: "56 5430 1058", Usuario: "Ivon Ruiz Mendoza", Mail: "ivon.ruiz@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "3 GB / 5.4 GB" },
+      { Numero: "56 6056 6517", Usuario: "Patricia Angélica Pérez García", Mail: "-", Area: "General", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "10 GB / 10 GB" },
+      { Numero: "56 5926 3385", Usuario: "Erick Mauricio Raya Espino", Mail: "mauricio.raya@benandfrank.com", Area: "Retail", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "10 GB / 10 GB" },
+      { Numero: "56 5976 7167", Usuario: "Andrea Nathaly Aragon Álvarez", Mail: "nathaly.aragon@benandfrank.com", Area: "RH", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "10 GB / 10 GB" },
+      { Numero: "56 2336 0250", Usuario: "Osvaldo Porras Salinas", Mail: "-", Area: "General", Plan: "-", PagoMensual: "$0 MXN", TipoSim: "ESIM", Estatus: "Suspendido", Datos: "-" },
+      { Numero: "56 2502 7494", Usuario: "Brenda Salazar Jactthar", Mail: "brenda.salazar@benandfrank.com", Area: "Retail", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "6.7 GB / 7 GB" },
+      { Numero: "56 2355 7304", Usuario: "Ariadna Patricia Cruzado Benites", Mail: "ariadna.cruzado@benandfrank.com", Area: "Finanzas", Plan: "Plan 14 GB", PagoMensual: "$349 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "24.2 GB / 28 GB" },
+      { Numero: "56 2520 8716", Usuario: "Jonathan Curiel Ballesteros", Mail: "jonathan.curiel@benandfrank.com", Area: "RH", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "4.6 GB / 7 GB" },
+      { Numero: "56 5564 0951", Usuario: "Jocelyn Guadalupe Castro Cruz", Mail: "jocelyn.castro@benandfrank.com", Area: "Retail", Plan: "-", PagoMensual: "$0 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "-" },
+      { Numero: "56 6386 0586", Usuario: "Edgar Rodriguez Davalos", Mail: "edgar.davalos@benandfrank.com", Area: "Retail", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "7 GB / 7 GB" },
+      { Numero: "56 5565 7946", Usuario: "Karina Flores Sánchez", Mail: "karina.flores@benandfrank.com", Area: "Retail", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "6.2 GB / 7 GB" },
+      { Numero: "56 6011 2256", Usuario: "Alfonso Vigil Hernández", Mail: "alfonso.vigil@benandfrank.com", Area: "Retail", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "7 GB / 7 GB" },
+      { Numero: "56 2520 7941", Usuario: "Odaris Perez Aguilar", Mail: "odaris.perez@benandfrank.com", Area: "Merch", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "3.8 GB / 7 GB" },
+      { Numero: "56 5985 2963", Usuario: "Rodrigo Daniel Lopez Santamarina", Mail: "-", Area: "General", Plan: "-", PagoMensual: "$0 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "-" },
+      { Numero: "56 6044 4160", Usuario: "Maria Fernanda Salas Tapia", Mail: "-", Area: "General", Plan: "-", PagoMensual: "$0 MXN", TipoSim: "ESIM", Estatus: "Eliminado", Datos: "-" },
+      { Numero: "56 5430 0450", Usuario: "Carlos Avila Garduño", Mail: "carlos.avila@benandfrank.com", Area: "Retail", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "2.1 GB / 7 GB" },
+      { Numero: "56 6041 8535", Usuario: "Brenda Sarahi Faustino Gordillo", Mail: "brenda.faustino@benandfrank.com", Area: "Merch", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "2.2 GB / 7 GB" },
+      { Numero: "442 889 0647", Usuario: "Brenda Berenice Martínez González", Mail: "-", Area: "General", Plan: "-", PagoMensual: "$0 MXN", TipoSim: "ESIM", Estatus: "Eliminado", Datos: "-" },
+      { Numero: "442 897 9638", Usuario: "Juan Carlos Escobar Estrada", Mail: "carlos.escobar@benandfrank.com", Area: "Retail", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "2.8 GB / 7 GB" },
+      { Numero: "81 4801 2179", Usuario: "Andres Salomon Castillo Cadena", Mail: "-", Area: "General", Plan: "-", PagoMensual: "$0 MXN", TipoSim: "ESIM", Estatus: "Eliminado", Datos: "-" },
+      { Numero: "56 5977 4715", Usuario: "Zorangel Roscelia García Jurado", Mail: "-", Area: "General", Plan: "-", PagoMensual: "$0 MXN", TipoSim: "ESIM", Estatus: "Eliminado", Datos: "-" },
+      { Numero: "56 6011 2372", Usuario: "Mario Fernando Torrero Saldaña", Mail: "mario.torrero@benandfrank.com", Area: "Retail", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "0.7 GB / 7 GB" },
+      { Numero: "56 6101 8381", Usuario: "Miguel Angel Melecio Morales", Mail: "miguel.melecio@benandfrank.com", Area: "Retail", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "4.4 GB / 7 GB" },
+      { Numero: "56 6093 4977", Usuario: "Marcos López Vera", Mail: "marcos.lopez@benandfrank.com", Area: "Retail", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "4.3 GB / 7 GB" },
+      { Numero: "56 6008 6802", Usuario: "Jairo Josafat González Guerrero", Mail: "jairo.gonzalez@benandfrank.com", Area: "Merch", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "1.5 GB / 7 GB" },
+      { Numero: "56 6018 5911", Usuario: "Claudia Itzel Vega Juárez", Mail: "itzel.vega@benandfrank.com", Area: "Finanzas", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "5.7 GB / 13 GB" },
+      { Numero: "56 6018 5578", Usuario: "José David Victoria Pérez", Mail: "jose.victoria@benandfrank.com", Area: "Mantenimiento", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "0 GB / 7 GB" },
+      { Numero: "56 5971 6892", Usuario: "José Ignacio Muñoz García", Mail: "-", Area: "General", Plan: "Plan 5 GB", PagoMensual: "$219 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "10 GB / 10 GB" },
+      { Numero: "56 6042 4534", Usuario: "Guillermo Eduardo Torres Hughes", Mail: "eduardo.torres@benandfrank.com", Area: "Retail", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "ESIM", Estatus: "Activo", Datos: "6.1 GB / 7 GB" },
+      { Numero: "56 5969 4541", Usuario: "Ignacio Garcia Marmolejo", Mail: "ignacio.garcia@benandfrank.com", Area: "Construccion", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "5.4 GB / 7 GB" },
+      { Numero: "56 3719 4504", Usuario: "Irene Montserrat Mayrén López", Mail: "irene.mayren@benandfrank.com", Area: "Finanzas", Plan: "Plan 7 GB", PagoMensual: "$239 MXN", TipoSim: "SIM", Estatus: "Activo", Datos: "4 GB / 7 GB" },
+      { Numero: "237 126 1011", Usuario: "Alma Berenice Hernández De la Cruz", Mail: "-", Area: "General", Plan: "-", PagoMensual: "$0 MXN", TipoSim: "SIM", Estatus: "Suspendido", Datos: "-" }
+    ];
 
     const ADMIN_EMAILS = ['guillermo.villanueva@benandfrank.com', 'edgar.rodriguez@benandfrank.com'];
     const ADMIN_BU = 'Tech';
@@ -417,8 +483,8 @@
         navArea = 'Óptica por Tienda';
       } else if (datasetKey === 'CELULARES') {
         title = 'Listado Completo - Telefonía Celular';
-        navArea = 'Volumen y Costos x Área';
-        navModelo = 'Óptica por Usuario';
+        navArea = 'Volumen y Costos x BU';
+        navModelo = 'Óptica por Plan / Chip';
       }
       
       document.getElementById('tableTitleDisplay').innerText = title;
@@ -434,16 +500,15 @@
     }
 
     function fetchData() {
-      let targetUrl = SHEET_HQ_URL;
-      if (currentDataset === 'TIENDAS') targetUrl = SHEET_TIENDAS_URL;
-      if (currentDataset === 'CELULARES') targetUrl = SHEET_CELULARES_URL;
-
-      if (!targetUrl) {
-        globalData = [];
+      if (currentDataset === 'CELULARES') {
+        // Carga directa instantánea garantizada
+        globalData = globalCelularesDataset.map((item, idx) => ({ ...item, _rowIndex: idx }));
         populateFilterDropdowns(globalData);
         applyFilters();
         return;
       }
+
+      let targetUrl = currentDataset === 'TIENDAS' ? SHEET_TIENDAS_URL : SHEET_HQ_URL;
 
       Papa.parse(targetUrl, {
         download: true,
@@ -456,8 +521,6 @@
             parseHQData(rawRows);
           } else if (currentDataset === 'TIENDAS') {
             parseTiendasData(rawRows);
-          } else if (currentDataset === 'CELULARES') {
-            parseCelularesData(rawRows);
           }
 
           populateFilterDropdowns(globalData);
@@ -526,59 +589,6 @@
       }).filter(item => item['Tienda'] && item['Tienda'] !== 'Tienda Sin Nombre');
     }
 
-    // Lógica robusta que procesa tanto por encabezados como por índice directo de columna A-H
-    function parseCelularesData(rawRows) {
-      if (!rawRows || rawRows.length === 0) {
-        globalData = [];
-        return;
-      }
-
-      // Buscar si la fila 0 contiene encabezados o datos
-      let headerIndex = rawRows.findIndex(row => row.some(cell => 
-        String(cell).toLowerCase().includes('numero') || 
-        String(cell).toLowerCase().includes('número') ||
-        String(cell).toLowerCase().includes('colaborador') || 
-        String(cell).toLowerCase().includes('mail')
-      ));
-
-      let dataRows = [];
-      let headers = [];
-
-      if (headerIndex !== -1) {
-        headers = rawRows[headerIndex].map(h => String(h).trim());
-        dataRows = rawRows.slice(headerIndex + 1);
-      } else {
-        dataRows = rawRows;
-      }
-
-      globalData = dataRows.map((row, idx) => {
-        // Asignación por posición de columna segura (Fallback A-H)
-        const colNum = row[0] ? String(row[0]).trim() : 'N/D';
-        const colUser = row[1] ? String(row[1]).trim() : 'Sin Asignar';
-        const colMail = row[2] ? String(row[2]).trim() : 'N/D';
-        const colArea = row[3] ? String(row[3]).trim() : 'General';
-        const colPlan = row[4] ? String(row[4]).trim() : 'Plan Renta';
-        const colCosto = row[5] ? String(row[5]).trim() : '$0';
-        const colChip = row[6] ? String(row[6]).trim() : 'SIM';
-        const colEstatus = row[7] ? String(row[7]).trim() : 'Activo';
-
-        return {
-          _rowIndex: idx,
-          'Numero': colNum,
-          'Usuario': colUser,
-          'Mail': colMail,
-          'Area': colArea,
-          'Plan': colPlan,
-          'PagoMensual': colCosto,
-          'TipoSim': colChip,
-          'Estatus': colEstatus,
-          'Marca': 'Celular',
-          'Modelo': 'Estándar',
-          'IMEI': `IMEI-${idx+1000}`
-        };
-      }).filter(item => item['Numero'] && item['Numero'] !== 'N/D' && item['Numero'] !== 'Número');
-    }
-
     function renderFilterControls() {
       const container = document.getElementById('filterContainerGrid');
       if (currentDataset === 'HQ') {
@@ -618,7 +628,7 @@
       } else if (currentDataset === 'CELULARES') {
         container.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3";
         container.innerHTML = `
-          <select id="filterAreaCel" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">🏢 Todas las Áreas</option></select>
+          <select id="filterAreaCel" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">🏢 Todas las Áreas / BU</option></select>
           <select id="filterPlanCel" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">📋 Todos los Planes</option></select>
           <select id="filterTipoSim" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">📲 SIM / eSIM</option></select>
           <input type="text" id="filterNumCel" placeholder="📞 Buscar por Número / Mail..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
@@ -665,13 +675,14 @@
         head.innerHTML = `
           <tr>
             <th class="p-3 font-bold text-blue-400">Número / Línea</th>
-            <th class="p-3 font-bold text-indigo-400">Área / Depto</th>
+            <th class="p-3 font-bold text-indigo-400">BU / Área</th>
             <th class="p-3 font-bold text-white">Colaborador</th>
             <th class="p-3 font-mono text-slate-400">Mail</th>
-            <th class="p-3 font-bold text-purple-300">Plan Contratado</th>
-            <th class="p-3 font-bold text-emerald-400">Costo Mensual</th>
-            <th class="p-3 text-center">Tipo Chip</th>
-            <th class="p-3 text-center">Estatus</th>
+            <th class="p-3 font-bold text-purple-300">Plan</th>
+            <th class="p-3 font-bold text-emerald-400">Precio Mensual</th>
+            <th class="p-3 text-center">Tipo SIM</th>
+            <th class="p-3 text-center">Datos Consumo</th>
+            <th class="p-3 text-center">Estado</th>
             <th class="p-3 text-center">Acción</th>
           </tr>
         `;
@@ -764,14 +775,14 @@
           </div>
           <div class="bg-panel p-4 rounded-xl border border-rocker shadow-lg flex items-center justify-between">
             <div>
-              <p class="text-[10px] font-bold text-slate-500 uppercase">Líneas Asignadas / Áreas</p>
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Líneas Asignadas / BU</p>
               <h3 class="text-xl font-bold text-purple-400 mt-1">${asignadas} <span class="text-xs text-slate-500 font-normal">(${areasCount} Áreas)</span></h3>
             </div>
             <div class="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold border border-purple-500/20">👥</div>
           </div>
           <div class="bg-panel p-4 rounded-xl border border-rocker shadow-lg flex items-center justify-between">
             <div>
-              <p class="text-[10px] font-bold text-slate-500 uppercase">Gasto Mensual Total</p>
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Gasto Mensual Acumulado</p>
               <h3 class="text-xl font-bold text-emerald-400 mt-1">$${gastoTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</h3>
             </div>
             <div class="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold border border-emerald-500/20">💵</div>
@@ -825,7 +836,7 @@
 
         const selArea = document.getElementById('filterAreaCel');
         if (selArea) {
-          selArea.innerHTML = '<option value="">🏢 Todas las Áreas</option>';
+          selArea.innerHTML = '<option value="">🏢 Todas las Áreas / BU</option>';
           areas.forEach(a => selArea.innerHTML += `<option value="${a}">${a}</option>`);
         }
 
@@ -929,10 +940,10 @@
         headerHead.innerHTML = `
           <tr>
             <th class="p-3 font-bold text-blue-400">Número</th>
-            <th class="p-3 font-bold text-indigo-400">Área</th>
+            <th class="p-3 font-bold text-indigo-400">BU / Área</th>
             <th class="p-3 font-bold text-white">Colaborador</th>
             <th class="p-3 text-slate-400 font-mono">Mail</th>
-            <th class="p-3 font-bold text-emerald-400">Costo Mensual</th>
+            <th class="p-3 font-bold text-emerald-400">Precio Mensual</th>
             <th class="p-3">Plan</th>
           </tr>
         `;
@@ -1167,7 +1178,7 @@
         container.innerHTML = `
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
-              <h2 class="text-sm font-bold text-purple-400 mb-4">🏢 Volumen de Líneas por Área</h2>
+              <h2 class="text-sm font-bold text-purple-400 mb-4">🏢 Volumen de Líneas por Área / BU</h2>
               <div class="h-64"><canvas id="c1"></canvas></div>
             </div>
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
@@ -1339,7 +1350,7 @@
       const pageItems = filteredData.slice(start, start + pageSize);
 
       if (pageItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="text-center p-8 text-slate-600">Sin coincidencias encontradas</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center p-8 text-slate-600">Sin coincidencias encontradas</td></tr>`;
       } else {
         pageItems.forEach((row) => {
           const actionBtn = isAdmin
@@ -1389,6 +1400,12 @@
               <td class="p-3 text-center">${actionBtn}</td>
             `;
           } else if (currentDataset === 'CELULARES') {
+            const badgeEstatus = row['Estatus'] === 'Activo' 
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+              : row['Estatus'] === 'Suspendido' 
+              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
+              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
+
             tr.innerHTML = `
               <td class="p-3 font-mono font-bold text-blue-400">${row['Numero']}</td>
               <td class="p-3 font-semibold text-indigo-300">${row['Area']}</td>
@@ -1397,8 +1414,9 @@
               <td class="p-3 font-semibold text-purple-300">${row['Plan']}</td>
               <td class="p-3 text-emerald-400 font-bold">${row['PagoMensual']}</td>
               <td class="p-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700">${row['TipoSim']}</span></td>
+              <td class="p-3 text-center font-mono text-slate-400">${row['Datos']}</td>
               <td class="p-3 text-center">
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeEstatus}">
                   ${row['Estatus']}
                 </span>
               </td>
@@ -1445,10 +1463,10 @@
       } else if (templateType === 'CELULAR') {
         formContainer.innerHTML = `
           <div><label class="block text-slate-400 mb-1 font-bold text-blue-400">Número de Línea</label><input type="text" id="formNumCelular" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: 56 6757 8638"></div>
-          <div><label class="block text-slate-400 mb-1 font-bold text-indigo-400">Área / Departamento</label><input type="text" id="formAreaCel" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Retail / Construcción"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-indigo-400">Área / BU</label><input type="text" id="formAreaCel" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Retail / RH"></div>
           <div><label class="block text-slate-400 mb-1 font-bold text-purple-400">Colaborador</label><input type="text" id="formUsuarioCel" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Nombre completo"></div>
           <div><label class="block text-slate-400 mb-1 font-bold text-cyan-400">Correo Corporativo</label><input type="email" id="formMailCel" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="correo@benandfrank.com"></div>
-          <div><label class="block text-slate-400 mb-1 font-bold text-emerald-400">Costo Mensual (MXN)</label><input type="text" id="formPagoMensual" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: $219 MXN"></div>
+          <div><label class="block text-slate-400 mb-1 font-bold text-emerald-400">Precio Mensual (MXN)</label><input type="text" id="formPagoMensual" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: $219 MXN"></div>
           <div><label class="block text-slate-400 mb-1">Plan</label><input type="text" id="formPlanCel" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Ej: Plan 5 GB"></div>
           <div><label class="block text-slate-400 mb-1">Tipo SIM</label><select id="formTipoSim" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"><option value="SIM">SIM</option><option value="ESIM">eSIM</option></select></div>
         `;
