@@ -147,6 +147,11 @@
           <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
           <span>Exportar Datos</span>
         </button>
+
+        <button id="sidebarResetBtn" onclick="resetDatasetToOriginal()" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-rose-400/80 hover:text-rose-300 hover:bg-rose-500/10 transition hidden">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          <span>Restablecer Datos</span>
+        </button>
       </nav>
     </div>
 
@@ -556,6 +561,8 @@
         document.getElementById('mainBtnBulk').classList.remove('hidden');
         document.getElementById('sidebarBtnBulk').classList.remove('hidden');
         document.getElementById('sidebarBtnBulk').classList.add('flex');
+        document.getElementById('sidebarResetBtn').classList.remove('hidden');
+        document.getElementById('sidebarResetBtn').classList.add('flex');
         document.getElementById('adminNavSection').classList.remove('hidden');
         selector.disabled = false;
         switchDataset('HQ');
@@ -566,6 +573,7 @@
         document.getElementById('sidebarBtnNuevo').classList.add('hidden');
         document.getElementById('mainBtnBulk').classList.add('hidden');
         document.getElementById('sidebarBtnBulk').classList.add('hidden');
+        document.getElementById('sidebarResetBtn').classList.add('hidden');
         document.getElementById('adminNavSection').classList.add('hidden');
 
         if (bu === 'Retail' || bu === 'Operaciones') {
@@ -592,6 +600,20 @@
       };
       auditLogs.unshift(logEntry);
       localStorage.setItem('galileo_audit_logs', JSON.stringify(auditLogs.slice(0, 200)));
+    }
+
+    function saveCurrentDatasetToLocalStorage() {
+      localStorage.setItem(`galileo_dataset_${currentDataset}`, JSON.stringify(globalData));
+    }
+
+    function resetDatasetToOriginal() {
+      if (!isAdmin) return;
+      if (confirm(`¿Estás seguro de restablecer los datos de ${currentDataset}? Esto eliminará los cambios locales guardados.`)) {
+        localStorage.removeItem(`galileo_dataset_${currentDataset}`);
+        logAction('RESET_DATASET', `Restablecimiento de datos a estado original para ${currentDataset}`);
+        fetchData();
+        alert('Datos restablecidos correctamente.');
+      }
     }
 
     function openBulkModal() {
@@ -672,6 +694,13 @@
 
           if (target === currentDataset) {
             globalData = [...globalData, ...processedRows];
+            saveCurrentDatasetToLocalStorage();
+          } else {
+            // Si cargaron a otro dataset distinto del activo, guardamos en su propia key de localStorage
+            const otherLocal = localStorage.getItem(`galileo_dataset_${target}`);
+            const otherData = otherLocal ? JSON.parse(otherLocal) : [];
+            const updatedOtherData = [...otherData, ...processedRows];
+            localStorage.setItem(`galileo_dataset_${target}`, JSON.stringify(updatedOtherData));
           }
 
           logAction('CARGA_MASIVA', `Carga masiva completada en base ${target}. Archivo: ${file.name} | ${processedRows.length} registros cargados | Admin: ${adminMail}`);
@@ -711,6 +740,16 @@
     }
 
     function fetchData() {
+      // 1. VERIFICAR PERSISTENCIA LOCAL EN LOCALSTORAGE
+      const localSavedData = localStorage.getItem(`galileo_dataset_${currentDataset}`);
+      if (localSavedData) {
+        globalData = JSON.parse(localSavedData);
+        populateFilterDropdowns(globalData);
+        applyFilters();
+        return;
+      }
+
+      // 2. SI NO HAY REGISTROS LOCALES, LERREMOS FUENTES DE ORIGEN
       if (currentDataset === 'CELULARES') {
         globalData = globalCelularesDataset.map((item, idx) => ({ ...item, _rowIndex: idx }));
         populateFilterDropdowns(globalData);
@@ -1908,7 +1947,8 @@
             <div><label class="block text-slate-400 mb-1">Usuario Asignado</label><input type="text" id="formResponsable" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Apellido, Nombre"></div>
             <div><label class="block text-slate-400 mb-1">Correo Colaborador</label><input type="email" id="formMail" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="correo@benandfrank.com"></div>
             <div><label class="block text-slate-400 mb-1">Dirección / Área</label><input type="text" id="formDireccion" class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Tech, Marketing..."></div>
-            <div><label class="block text-slate-400 mb-1">Marca / Modelo</label><input type="text" id="formModelo" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Apple MacBook Air M2 / Lenovo T14"></div>
+            <div><label class="block text-slate-400 mb-1">Marca</label><input type="text" id="formMarcaHQ" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Apple / Lenovo"></div>
+            <div><label class="block text-slate-400 mb-1">Modelo</label><input type="text" id="formModeloHQ" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="MacBook Air M2 / ThinkPad T14"></div>
             <div><label class="block text-slate-400 mb-1 font-bold text-amber-400">Fecha de Alta (Captura Admin)</label><input type="date" id="formFechaAlta" value="${todayIso}" required class="w-full bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"></div>
           `;
         } else {
@@ -1941,7 +1981,8 @@
           if (document.getElementById('formResponsable')) document.getElementById('formResponsable').value = item['Responsable del activo'] || '';
           if (document.getElementById('formMail')) document.getElementById('formMail').value = item['Mail'] || '';
           if (document.getElementById('formDireccion')) document.getElementById('formDireccion').value = item['Direccion'] || '';
-          if (document.getElementById('formModelo')) document.getElementById('formModelo').value = `${item['Marca'] || ''} ${item['Model'] || item['Tipo'] || ''}`.trim();
+          if (document.getElementById('formMarcaHQ')) document.getElementById('formMarcaHQ').value = item['Marca'] || '';
+          if (document.getElementById('formModeloHQ')) document.getElementById('formModeloHQ').value = item['Model'] || item['Tipo'] || '';
           if (document.getElementById('formFechaAlta')) document.getElementById('formFechaAlta').value = item['FechaAlta'] || new Date().toISOString().slice(0, 10);
         }, 50);
       } else if (currentDataset === 'TIENDAS') {
@@ -1982,7 +2023,7 @@
 
     function closeModal() { document.getElementById('assetModal').classList.add('hidden'); }
 
-    // GUARDADO DE REGISTROS CORREGIDO Y SYNCRONIZADO
+    // GUARDADO DE REGISTROS CORREGIDO CON PERSISTENCIA LOCAL EN LOCALSTORAGE
     function saveAsset(e) {
       e.preventDefault();
       if (!isAdmin) return;
@@ -2010,6 +2051,8 @@
             item['Responsable del activo'] = document.getElementById('formResponsable')?.value || item['Responsable del activo'];
             item['Mail'] = document.getElementById('formMail')?.value || item['Mail'];
             item['Direccion'] = document.getElementById('formDireccion')?.value || item['Direccion'];
+            item['Marca'] = document.getElementById('formMarcaHQ')?.value || item['Marca'];
+            item['Model'] = document.getElementById('formModeloHQ')?.value || item['Model'];
           } else if (currentDataset === 'TIENDAS') {
             item['Asset_ID'] = document.getElementById('formAssetID')?.value || item['Asset_ID'];
             item['ID_Tienda'] = document.getElementById('formIDTienda')?.value || item['ID_Tienda'];
@@ -2030,7 +2073,7 @@
         }
         logAction('EDICION', `Modificación en dataset ${currentDataset}. Fecha Alta Capturada: ${fechaAltaCapturada} | Fecha/Hora Sistema: ${fechaSistemaFormatted} | Admin: ${adminMail}`);
       } else {
-        // LÓGICA DE ALTA DE NUEVO REGISTRO EN TIENDAS
+        // LÓGICA DE ALTA DE NUEVO REGISTRO EN DATASET ACTIVO
         if (currentDataset === 'TIENDAS') {
           const rawTipo = document.getElementById('formTipo')?.value || 'iPad';
           const tiendaVal = document.getElementById('formTienda')?.value || 'San Angel';
@@ -2050,14 +2093,52 @@
             'AdminCaptura': adminMail
           };
           globalData.unshift(newItem);
+        } else if (currentDataset === 'HQ') {
+          const newItem = {
+            _rowIndex: globalData.length,
+            'Numero de Serie': document.getElementById('formSerie')?.value || `HQ-${Date.now()}`,
+            'Responsable del activo': document.getElementById('formResponsable')?.value || 'Sin Asignar',
+            'Mail': document.getElementById('formMail')?.value || '-',
+            'Direccion': document.getElementById('formDireccion')?.value || 'HQ',
+            'Marca': document.getElementById('formMarcaHQ')?.value || 'Genérico',
+            'Model': document.getElementById('formModeloHQ')?.value || 'Estándar',
+            'Tier Actual': 'Tier 2',
+            'Años de Vida Remanente': 3,
+            'Actual vs Esperado': 'Correcto',
+            'FechaAlta': fechaAltaCapturada,
+            'FechaSistema': fechaSistemaFormatted,
+            'AdminCaptura': adminMail
+          };
+          globalData.unshift(newItem);
+        } else if (currentDataset === 'CELULARES') {
+          const newItem = {
+            _rowIndex: globalData.length,
+            'Numero': document.getElementById('formNumCelular')?.value || `55 0000 ${Math.floor(1000 + Math.random() * 9000)}`,
+            'Area': document.getElementById('formAreaCel')?.value || 'General',
+            'Usuario': document.getElementById('formUsuarioCel')?.value || 'Sin Asignar',
+            'Mail': document.getElementById('formMailCel')?.value || '-',
+            'PagoMensual': document.getElementById('formPagoMensual')?.value || '$219 MXN',
+            'Plan': document.getElementById('formPlanCel')?.value || 'Plan 5 GB',
+            'Modelo': document.getElementById('formModeloCel')?.value || 'iPhone 13',
+            'TipoSim': document.getElementById('formTipoSim')?.value || 'SIM',
+            'Estatus': 'Activo',
+            'Datos': '0 GB / 5 GB',
+            'FechaAlta': fechaAltaCapturada,
+            'FechaSistema': fechaSistemaFormatted,
+            'AdminCaptura': adminMail
+          };
+          globalData.unshift(newItem);
         }
         logAction('ALTA_REGISTRO', `Nuevo registro (${type}). Fecha Alta Capturada: ${fechaAltaCapturada} | Fecha/Hora Sistema: ${fechaSistemaFormatted} | Admin: ${adminMail}`);
       }
 
+      // PERSISTIR CAMBIOS EN LOCALSTORAGE
+      saveCurrentDatasetToLocalStorage();
+
       populateFilterDropdowns(globalData);
       applyFilters();
       closeModal();
-      alert(isEdit ? '¡Registro actualizado con éxito!' : `¡Nuevo registro capturado con éxito!`);
+      alert(isEdit ? '¡Registro actualizado con éxito y guardado localmente!' : `¡Nuevo registro capturado y guardado localmente!`);
     }
 
     function exportCSV() {
