@@ -191,6 +191,7 @@
       <!-- TARJETAS KPIS DINÁMICAS -->
       <div id="kpiContainerGrid" class="grid grid-cols-1 sm:grid-cols-4 gap-4"></div>
 
+      <!-- DASHBOARDS GRÁFICOS (4 GRÁFICOS) -->
       <div id="viewContainer" class="space-y-6"></div>
 
       <!-- Filtros Multicriterio Dinámicos -->
@@ -381,8 +382,11 @@
     let currentPage = 1;
     const pageSize = 10;
 
+    // Instancias de gráficos
     let chartObj1 = null;
     let chartObj2 = null;
+    let chartObj3 = null;
+    let chartObj4 = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       const savedLogs = localStorage.getItem('galileo_audit_logs');
@@ -501,7 +505,6 @@
 
     function fetchData() {
       if (currentDataset === 'CELULARES') {
-        // Carga directa instantánea garantizada
         globalData = globalCelularesDataset.map((item, idx) => ({ ...item, _rowIndex: idx }));
         populateFilterDropdowns(globalData);
         applyFilters();
@@ -878,6 +881,15 @@
             if (labelValue === 'Sub-esp.') return diag.includes('sub');
             return false;
           });
+        } else if (categoryType === 'area') {
+          matchedItems = globalData.filter(d => (d['Direccion'] || 'N/D').trim() === labelValue);
+        } else if (categoryType === 'so') {
+          matchedItems = globalData.filter(d => {
+            const str = ((d['Marca'] || '') + ' ' + (d['Model'] || '') + ' ' + (d['Tipo'] || '')).toLowerCase();
+            if (labelValue === 'Apple / macOS') return str.includes('apple') || str.includes('mac') || str.includes('macbook');
+            if (labelValue === 'Windows / PC') return str.includes('lenovo') || str.includes('windows') || str.includes('thinkpad') || str.includes('hp') || str.includes('dell');
+            return !str.includes('apple') && !str.includes('mac') && !str.includes('lenovo') && !str.includes('windows') && !str.includes('thinkpad');
+          });
         }
 
         headerHead.innerHTML = `
@@ -1143,19 +1155,32 @@
 
     function renderDashboard(data) {
       const container = document.getElementById('viewContainer');
+      
+      // Limpiar instancias previas de gráficos
       if (chartObj1) chartObj1.destroy();
       if (chartObj2) chartObj2.destroy();
+      if (chartObj3) chartObj3.destroy();
+      if (chartObj4) chartObj4.destroy();
 
       if (currentDataset === 'HQ') {
+        // Rediseño a 4 gráficos en HQ Corporativo
         container.innerHTML = `
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
               <h2 class="text-sm font-bold text-white mb-4">Años de Vida Remanente</h2>
-              <div class="h-64"><canvas id="c1"></canvas></div>
+              <div class="h-60"><canvas id="c1"></canvas></div>
             </div>
             <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
               <h2 class="text-sm font-bold text-white mb-4">Diagnóstico de Tiering</h2>
-              <div class="h-64"><canvas id="c2"></canvas></div>
+              <div class="h-60"><canvas id="c2"></canvas></div>
+            </div>
+            <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
+              <h2 class="text-sm font-bold text-purple-400 mb-4">🏢 Equipos por Área / Dirección</h2>
+              <div class="h-60"><canvas id="c3"></canvas></div>
+            </div>
+            <div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl">
+              <h2 class="text-sm font-bold text-cyan-400 mb-4">💻 Equipos Windows vs Apple</h2>
+              <div class="h-60"><canvas id="c4"></canvas></div>
             </div>
           </div>
         `;
@@ -1192,6 +1217,7 @@
     }
 
     function renderGlobalHQCharts(data) {
+      // 1. Años de vida remanente
       const vidaCount = {};
       data.forEach(d => {
         const yrs = d['Años de Vida Remanente'] !== undefined && d['Años de Vida Remanente'] !== '' ? `${d['Años de Vida Remanente']} Año(s)` : 'N/D';
@@ -1215,6 +1241,7 @@
         }
       });
 
+      // 2. Diagnóstico de Tiering
       const correctos = data.filter(d => !(d['Actual vs Esperado'] || '').toLowerCase().includes('sobre') && !(d['Actual vs Esperado'] || '').toLowerCase().includes('sub')).length;
       const sobre = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sobre')).length;
       const sub = data.filter(d => (d['Actual vs Esperado'] || '').toLowerCase().includes('sub')).length;
@@ -1231,6 +1258,69 @@
             if (points.length) {
               const label = chartObj2.data.labels[points[0].index];
               openChartDetailModal('diagnostico', label);
+            }
+          }
+        }
+      });
+
+      // 3. Equipos por Área / Dirección
+      const areaCount = {};
+      data.forEach(d => {
+        const area = (d['Direccion'] || 'Sin Área').trim();
+        if (area) areaCount[area] = (areaCount[area] || 0) + 1;
+      });
+
+      chartObj3 = new Chart(document.getElementById('c3'), {
+        type: 'bar',
+        data: { 
+          labels: Object.keys(areaCount), 
+          datasets: [{ label: 'Equipos', data: Object.values(areaCount), backgroundColor: '#8b5cf6', borderRadius: 6 }] 
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          plugins: { legend: { display: false } },
+          onClick: (evt) => {
+            const points = chartObj3.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+            if (points.length) {
+              const label = chartObj3.data.labels[points[0].index];
+              openChartDetailModal('area', label);
+            }
+          }
+        }
+      });
+
+      // 4. Windows vs Apple
+      let appleCount = 0;
+      let windowsCount = 0;
+      let otrosCount = 0;
+
+      data.forEach(d => {
+        const str = ((d['Marca'] || '') + ' ' + (d['Model'] || '') + ' ' + (d['Tipo'] || '')).toLowerCase();
+        if (str.includes('apple') || str.includes('mac') || str.includes('macbook')) {
+          appleCount++;
+        } else if (str.includes('lenovo') || str.includes('windows') || str.includes('thinkpad') || str.includes('hp') || str.includes('dell')) {
+          windowsCount++;
+        } else {
+          otrosCount++;
+        }
+      });
+
+      chartObj4 = new Chart(document.getElementById('c4'), {
+        type: 'doughnut',
+        data: { 
+          labels: ['Windows / PC', 'Apple / macOS', 'Otros'], 
+          datasets: [{ data: [windowsCount, appleCount, otrosCount], backgroundColor: ['#0078d4', '#a2aaad', '#64748b'] }] 
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          plugins: { legend: { position: 'bottom' } },
+          onClick: (evt) => {
+            const points = chartObj4.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+            if (points.length) {
+              const label = chartObj4.data.labels[points[0].index];
+              openChartDetailModal('so', label);
             }
           }
         }
