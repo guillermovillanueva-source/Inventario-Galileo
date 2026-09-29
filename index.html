@@ -10,8 +10,8 @@
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js Fijo (4.4.4) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4"></script>
   <!-- PapaParse -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <!-- Google Identity Services Library -->
@@ -355,6 +355,14 @@
   </div>
 
   <script>
+    // 1.1 ESCAPAR HTML Y GENERADOR DE IDS
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const newId = () => Date.now() + Math.floor(Math.random() * 1000);
+
+    // 2.1 UTILERÍAS GLOBALES PARA MESES
+    const monthNames = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+    const monthOf = s => /^\d{4}-\d{2}/.test(s || '') ? Number(s.slice(5, 7)) - 1 : -1;
+
     const SHEET_HQ_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6O7VuFl6hhj6TzvCYlHF5mVq6qQz49oTsFurFP7yINJzTjNddurEHG_GQCVsy4cqEO8ntD_m1WYi-/pub?gid=1154664784&single=true&output=csv';
     const SHEET_TIENDAS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVj5iUE5wOYEvbzeIKp1nIJwQ9gYbAPqK9KGid2hmsVxjHeL4OclmpwJDUoaKYJSCsN6K3IgCHHuQl/pub?gid=1184661297&single=true&output=csv';
 
@@ -602,14 +610,20 @@
       localStorage.setItem('galileo_audit_logs', JSON.stringify(auditLogs.slice(0, 200)));
     }
 
+    // 1.3 PERSISTENCIA EN LOCALSTORAGE (AGREGADOS Y EDICIONES SEPARADOS)
     function saveCurrentDatasetToLocalStorage() {
-      localStorage.setItem(`galileo_dataset_${currentDataset}`, JSON.stringify(globalData));
+      const added = globalData.filter(d => d._added);
+      const edits = {};
+      globalData.filter(d => !d._added && d._dirty).forEach(d => { edits[d._rowIndex] = d; });
+      localStorage.setItem(`galileo_added_${currentDataset}`, JSON.stringify(added));
+      localStorage.setItem(`galileo_edits_${currentDataset}`, JSON.stringify(edits));
     }
 
     function resetDatasetToOriginal() {
       if (!isAdmin) return;
       if (confirm(`¿Estás seguro de restablecer los datos de ${currentDataset}? Esto eliminará los cambios locales guardados.`)) {
-        localStorage.removeItem(`galileo_dataset_${currentDataset}`);
+        localStorage.removeItem(`galileo_added_${currentDataset}`);
+        localStorage.removeItem(`galileo_edits_${currentDataset}`);
         logAction('RESET_DATASET', `Restablecimiento de datos a estado original para ${currentDataset}`);
         fetchData();
         alert('Datos restablecidos correctamente.');
@@ -648,6 +662,7 @@
       document.body.removeChild(link);
     }
 
+    // 1.3 BULK UPLOAD CON IDs ÚNICOS
     function processBulkUpload() {
       if (!isAdmin) return;
       
@@ -686,21 +701,20 @@
 
           const processedRows = parsedData.map((row, idx) => ({
             ...row,
-            _rowIndex: globalData.length + idx,
+            _rowIndex: newId() + idx,
+            _added: true,
             FechaAlta: row['FechaAlta'] || now.toISOString().slice(0, 10),
             FechaSistema: fechaSistemaFormatted,
             AdminCaptura: adminMail
           }));
 
           if (target === currentDataset) {
-            globalData = [...globalData, ...processedRows];
+            globalData = [...processedRows, ...globalData];
             saveCurrentDatasetToLocalStorage();
           } else {
-            // Si cargaron a otro dataset distinto del activo, guardamos en su propia key de localStorage
-            const otherLocal = localStorage.getItem(`galileo_dataset_${target}`);
-            const otherData = otherLocal ? JSON.parse(otherLocal) : [];
-            const updatedOtherData = [...otherData, ...processedRows];
-            localStorage.setItem(`galileo_dataset_${target}`, JSON.stringify(updatedOtherData));
+            const k = `galileo_added_${target}`;
+            const prev = JSON.parse(localStorage.getItem(k) || '[]');
+            localStorage.setItem(k, JSON.stringify([...processedRows, ...prev]));
           }
 
           logAction('CARGA_MASIVA', `Carga masiva completada en base ${target}. Archivo: ${file.name} | ${processedRows.length} registros cargados | Admin: ${adminMail}`);
@@ -739,42 +753,28 @@
       fetchData();
     }
 
+    // 1.3 FINISH LOAD Y FETCH DATA CON MEZCLA BASE + EDITS + ADDED
+    function finishLoad(base) {
+      const added = JSON.parse(localStorage.getItem(`galileo_added_${currentDataset}`) || '[]');
+      const edits = JSON.parse(localStorage.getItem(`galileo_edits_${currentDataset}`) || '{}');
+      globalData = [...added, ...base.map(r => edits[r._rowIndex] ? { ...r, ...edits[r._rowIndex] } : r)];
+      populateFilterDropdowns(globalData);
+      applyFilters();
+    }
+
     function fetchData() {
-      // 1. VERIFICAR PERSISTENCIA LOCAL EN LOCALSTORAGE
-      const localSavedData = localStorage.getItem(`galileo_dataset_${currentDataset}`);
-      if (localSavedData) {
-        globalData = JSON.parse(localSavedData);
-        populateFilterDropdowns(globalData);
-        applyFilters();
-        return;
-      }
-
-      // 2. SI NO HAY REGISTROS LOCALES, LERREMOS FUENTES DE ORIGEN
       if (currentDataset === 'CELULARES') {
-        globalData = globalCelularesDataset.map((item, idx) => ({ ...item, _rowIndex: idx }));
-        populateFilterDropdowns(globalData);
-        applyFilters();
+        finishLoad(globalCelularesDataset.map((item, idx) => ({ ...item, _rowIndex: idx })));
         return;
       }
-
-      let targetUrl = currentDataset === 'TIENDAS' ? SHEET_TIENDAS_URL : SHEET_HQ_URL;
-
-      Papa.parse(targetUrl, {
-        download: true,
-        header: false,
-        skipEmptyLines: true,
-        complete: function(results) {
-          const rawRows = results.data;
-          
-          if (currentDataset === 'HQ') {
-            parseHQData(rawRows);
-          } else if (currentDataset === 'TIENDAS') {
-            parseTiendasData(rawRows);
-          }
-
-          populateFilterDropdowns(globalData);
-          applyFilters();
-        }
+      const url = currentDataset === 'TIENDAS' ? SHEET_TIENDAS_URL : SHEET_HQ_URL;
+      Papa.parse(url, {
+        download: true, header: false, skipEmptyLines: true,
+        complete: r => {
+          currentDataset === 'HQ' ? parseHQData(r.data) : parseTiendasData(r.data);
+          finishLoad(globalData);
+        },
+        error: () => alert('No se pudo leer el Sheet. Revisa la conexión o la publicación.')
       });
     }
 
@@ -794,6 +794,7 @@
       }).filter(item => item['Mail'] || item['Responsable del activo'] || item['Numero de Serie']);
     }
 
+    // 2.4 TIENDAS SIN NOMBRE POR DEFECTO
     function parseTiendasData(rawRows) {
       let headerIndex = rawRows.findIndex(row => row.some(cell => 
         String(cell).toLowerCase().includes('tienda') || 
@@ -814,7 +815,7 @@
           rawObj[h] = row[i] ? String(row[i]).trim() : '';
         });
 
-        const tiendaNombre = rawObj['Tienda'] || rawObj['Sucursal'] || rawObj['Ubicacion'] || 'San Angel';
+        const tiendaNombre = rawObj['Tienda'] || rawObj['Sucursal'] || rawObj['Ubicacion'] || 'Sin tienda';
         const tiendaKey = tiendaNombre.toLowerCase().trim();
         
         const idTiendaUnico = rawObj['ID Tienda'] || rawObj['Código'] || TIENDA_ID_MAP[tiendaKey] || `TDA-${tiendaNombre.substring(0,4).toUpperCase()}`;
@@ -939,14 +940,19 @@
       }
     }
 
+    // 2.2 Y 2.3 KPIS ACTUALIZADOS
     function renderKPICards(data) {
       const kpiContainer = document.getElementById('kpiContainerGrid');
 
       if (currentDataset === 'HQ') {
         const total = data.length || 1;
-        const asignados = data.filter(d => d['Responsable del activo'] && d['Responsable del activo'] !== 'Stock').length;
+        const asignados = data.filter(d => {
+          const r = (d['Responsable del activo'] || '').trim().toLowerCase();
+          return r && r !== 'stock' && r !== 'sin asignar';
+        }).length;
         const stock = total - asignados;
-        const renovacion = data.filter(d => parseInt(d['Años de Vida Remanente'] || '0') <= 0).length;
+        const isObs = d => { const v = parseInt(d['Años de Vida Remanente'], 10); return !Number.isNaN(v) && v <= 0; };
+        const renovacion = data.filter(isObs).length;
         const pctRenov = Math.round((renovacion / total) * 100);
 
         kpiContainer.className = "grid grid-cols-1 sm:grid-cols-3 gap-4";
@@ -1003,11 +1009,12 @@
           </div>
         `;
       } else if (currentDataset === 'CELULARES') {
-        const totalLienas = data.length;
-        const asignadas = data.filter(d => d['Usuario'] && d['Usuario'].toLowerCase() !== 'sin asignar').length;
-        const areasCount = new Set(data.map(d => d['Area'])).size;
+        const activas = data.filter(d => d['Estatus'] === 'Activo');
+        const totalLienas = activas.length;
+        const asignadas = activas.filter(d => d['Usuario'] && d['Usuario'].toLowerCase() !== 'sin asignar').length;
+        const areasCount = new Set(activas.map(d => d['Area'])).size;
         
-        const gastoTotal = data.reduce((acc, curr) => {
+        const gastoTotal = activas.reduce((acc, curr) => {
           const val = parseFloat((curr['PagoMensual'] || '0').replace(/[^0-9.-]+/g,"")) || 0;
           return acc + val;
         }, 0);
@@ -1018,8 +1025,8 @@
         kpiContainer.innerHTML = `
           <div class="bg-panel p-4 rounded-xl border border-rocker shadow-lg flex items-center justify-between">
             <div>
-              <p class="text-[10px] font-bold text-slate-500 uppercase">Volumen Total de Líneas</p>
-              <h3 class="text-xl font-bold text-blue-400 mt-1">${totalLienas} <span class="text-xs text-slate-500 font-normal">Líneas</span></h3>
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Líneas Activas</p>
+              <h3 class="text-xl font-bold text-blue-400 mt-1">${totalLienas} <span class="text-xs text-slate-500 font-normal">/ ${data.length} total</span></h3>
             </div>
             <div class="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold border border-blue-500/20">📱</div>
           </div>
@@ -1048,6 +1055,7 @@
       }
     }
 
+    // 1.1 DROPDOWNS ESCAPADOS
     function populateFilterDropdowns(data) {
       if (currentDataset === 'HQ') {
         const areas = [...new Set(data.map(d => (d['Direccion'] || '').trim()).filter(Boolean))].sort();
@@ -1056,13 +1064,13 @@
         const selArea = document.getElementById('filterArea');
         if (selArea) {
           selArea.innerHTML = '<option value="">Todas las Áreas / Direcciones</option>';
-          areas.forEach(a => selArea.innerHTML += `<option value="${a}">${a}</option>`);
+          areas.forEach(a => selArea.innerHTML += `<option value="${esc(a)}">${esc(a)}</option>`);
         }
 
         const selMarca = document.getElementById('filterMarca');
         if (selMarca) {
           selMarca.innerHTML = '<option value="">Todas las Marcas</option>';
-          marcas.forEach(m => selMarca.innerHTML += `<option value="${m}">${m}</option>`);
+          marcas.forEach(m => selMarca.innerHTML += `<option value="${esc(m)}">${esc(m)}</option>`);
         }
       } else if (currentDataset === 'TIENDAS') {
         const tiendas = [...new Set(data.map(d => (d['Tienda'] || '').trim()).filter(Boolean))].sort();
@@ -1071,13 +1079,13 @@
         const selTienda = document.getElementById('filterTienda');
         if (selTienda) {
           selTienda.innerHTML = '<option value="">🏪 Todas las Tiendas</option>';
-          tiendas.forEach(t => selTienda.innerHTML += `<option value="${t}">${t}</option>`);
+          tiendas.forEach(t => selTienda.innerHTML += `<option value="${esc(t)}">${esc(t)}</option>`);
         }
 
         const selProducto = document.getElementById('filterProducto');
         if (selProducto) {
           selProducto.innerHTML = '<option value="">📦 Todos los Tipos de Equipo</option>';
-          productos.forEach(p => selProducto.innerHTML += `<option value="${p}">${p}</option>`);
+          productos.forEach(p => selProducto.innerHTML += `<option value="${esc(p)}">${esc(p)}</option>`);
         }
       } else if (currentDataset === 'CELULARES') {
         const areas = [...new Set(data.map(d => (d['Area'] || '').trim()).filter(Boolean))].sort();
@@ -1087,23 +1095,24 @@
         const selArea = document.getElementById('filterAreaCel');
         if (selArea) {
           selArea.innerHTML = '<option value="">🏢 Todas las Áreas / BU</option>';
-          areas.forEach(a => selArea.innerHTML += `<option value="${a}">${a}</option>`);
+          areas.forEach(a => selArea.innerHTML += `<option value="${esc(a)}">${esc(a)}</option>`);
         }
 
         const selPlan = document.getElementById('filterPlanCel');
         if (selPlan) {
           selPlan.innerHTML = '<option value="">📋 Todos los Planes</option>';
-          planes.forEach(p => selPlan.innerHTML += `<option value="${p}">${p}</option>`);
+          planes.forEach(p => selPlan.innerHTML += `<option value="${esc(p)}">${esc(p)}</option>`);
         }
 
         const selChip = document.getElementById('filterTipoSim');
         if (selChip) {
           selChip.innerHTML = '<option value="">📲 SIM / eSIM</option>';
-          chips.forEach(c => selChip.innerHTML += `<option value="${c}">${c}</option>`);
+          chips.forEach(c => selChip.innerHTML += `<option value="${esc(c)}">${esc(c)}</option>`);
         }
       }
     }
 
+    // 1.1 Y 2.1 CELDAS Y FILTROS ESCAPADOS EN MODAL GRÁFICO
     function openChartDetailModal(categoryType, labelValue) {
       const modal = document.getElementById('chartDetailModal');
       const modalTitle = document.getElementById('chartModalTitle');
@@ -1158,12 +1167,12 @@
 
           return `
             <tr class="bg-panel-hover transition-colors">
-              <td class="p-3 font-semibold text-white">${row['Responsable del activo'] || 'N/A'}</td>
-              <td class="p-3 text-slate-400 font-mono text-[11px]">${row['Mail'] || 'N/A'}</td>
-              <td class="p-3 text-slate-400">${(row['Direccion'] || 'N/A').trim()}</td>
-              <td class="p-3 font-medium text-slate-200">${row['Marca'] || ''} ${row['Model'] || row['Tipo'] || ''}</td>
-              <td class="p-3 font-mono text-slate-400 text-[11px]">${row['Numero de Serie'] || 'N/A'}</td>
-              <td class="p-3 text-center font-bold text-white">${row['Años de Vida Remanente'] ?? 'N/D'}</td>
+              <td class="p-3 font-semibold text-white">${esc(row['Responsable del activo']) || 'N/A'}</td>
+              <td class="p-3 text-slate-400 font-mono text-[11px]">${esc(row['Mail']) || 'N/A'}</td>
+              <td class="p-3 text-slate-400">${esc((row['Direccion'] || 'N/A').trim())}</td>
+              <td class="p-3 font-medium text-slate-200">${esc(row['Marca'])} ${esc(row['Model'] || row['Tipo'])}</td>
+              <td class="p-3 font-mono text-slate-400 text-[11px]">${esc(row['Numero de Serie']) || 'N/A'}</td>
+              <td class="p-3 text-center font-bold text-white">${esc(row['Años de Vida Remanente']) ?? 'N/D'}</td>
               <td class="p-3 text-center">${actionBtn}</td>
             </tr>
           `;
@@ -1195,12 +1204,12 @@
 
           return `
             <tr class="bg-panel-hover transition-colors">
-              <td class="p-3 font-bold text-blue-400 font-mono">${row['Asset_ID']}</td>
-              <td class="p-3 font-mono font-bold text-indigo-300">${row['ID_Tienda']}</td>
-              <td class="p-3 font-semibold text-purple-300">${row['Tienda']}</td>
-              <td class="p-3 font-bold text-emerald-400">${row['Tipo_Equipo']}</td>
-              <td class="p-3 font-medium text-cyan-400">${row['Marca']}</td>
-              <td class="p-3 font-semibold text-white">${row['Modelo']}</td>
+              <td class="p-3 font-bold text-blue-400 font-mono">${esc(row['Asset_ID'])}</td>
+              <td class="p-3 font-mono font-bold text-indigo-300">${esc(row['ID_Tienda'])}</td>
+              <td class="p-3 font-semibold text-purple-300">${esc(row['Tienda'])}</td>
+              <td class="p-3 font-bold text-emerald-400">${esc(row['Tipo_Equipo'])}</td>
+              <td class="p-3 font-medium text-cyan-400">${esc(row['Marca'])}</td>
+              <td class="p-3 font-semibold text-white">${esc(row['Modelo'])}</td>
               <td class="p-3 text-center">${actionBtn}</td>
             </tr>
           `;
@@ -1213,12 +1222,7 @@
         } else if (categoryType === 'modelo') {
           matchedItems = globalData.filter(d => (d['Modelo'] || 'Otro / Genérico').trim() === labelValue);
         } else if (categoryType === 'mes') {
-          matchedItems = globalData.filter(d => {
-            if (!d['FechaAlta']) return false;
-            const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-            const date = new Date(d['FechaAlta']);
-            return monthNames[date.getMonth()] === labelValue;
-          });
+          matchedItems = globalData.filter(d => monthNames[monthOf(d['FechaAlta'])] === labelValue);
         }
 
         headerHead.innerHTML = `
@@ -1240,12 +1244,12 @@
 
           return `
             <tr class="bg-panel-hover transition-colors">
-              <td class="p-3 font-bold text-blue-400 font-mono">${row['Numero']}</td>
-              <td class="p-3 font-semibold text-indigo-300">${row['Area']}</td>
-              <td class="p-3 text-white font-medium">${row['Usuario']}</td>
-              <td class="p-3 text-slate-400 font-mono text-[11px]">${row['Mail']}</td>
-              <td class="p-3 text-emerald-400 font-bold">${row['PagoMensual']}</td>
-              <td class="p-3 text-slate-200">${row['Plan']} (${row['Modelo'] || 'N/D'})</td>
+              <td class="p-3 font-bold text-blue-400 font-mono">${esc(row['Numero'])}</td>
+              <td class="p-3 font-semibold text-indigo-300">${esc(row['Area'])}</td>
+              <td class="p-3 text-white font-medium">${esc(row['Usuario'])}</td>
+              <td class="p-3 text-slate-400 font-mono text-[11px]">${esc(row['Mail'])}</td>
+              <td class="p-3 text-emerald-400 font-bold">${esc(row['PagoMensual'])}</td>
+              <td class="p-3 text-slate-200">${esc(row['Plan'])} (${esc(row['Modelo']) || 'N/D'})</td>
               <td class="p-3 text-center">${actionBtn}</td>
             </tr>
           `;
@@ -1378,23 +1382,24 @@
 
     document.getElementById('searchInput').addEventListener('input', applyFilters);
 
+    // 1.1 ESCAPADO EN LOGS DE AUDITORÍA
     function renderAuditLogsView() {
       if (!isAdmin) return;
 
       const container = document.getElementById('viewContainer');
       let rowsHtml = auditLogs.map(log => `
         <tr class="bg-panel-hover transition-colors">
-          <td class="p-3 font-mono text-slate-400">${log.timestamp}</td>
-          <td class="p-3 font-semibold text-white">${log.user}</td>
-          <td class="p-3 text-slate-400">${log.bu}</td>
-          <td class="p-3 font-bold text-blue-400">${log.dataset || 'HQ'}</td>
+          <td class="p-3 font-mono text-slate-400">${esc(log.timestamp)}</td>
+          <td class="p-3 font-semibold text-white">${esc(log.user)}</td>
+          <td class="p-3 text-slate-400">${esc(log.bu)}</td>
+          <td class="p-3 font-bold text-blue-400">${esc(log.dataset) || 'HQ'}</td>
           <td class="p-3 text-center">
             <span class="px-2 py-0.5 rounded text-[10px] font-bold ${log.role === 'Admin' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-slate-800 text-slate-400'}">
-              ${log.role}
+              ${esc(log.role)}
             </span>
           </td>
-          <td class="p-3 font-bold ${log.type === 'LOGIN_GOOGLE' ? 'text-purple-400' : log.type === 'EDICION' ? 'text-amber-400' : 'text-emerald-400'}">${log.type}</td>
-          <td class="p-3 text-slate-300">${log.detail}</td>
+          <td class="p-3 font-bold ${log.type === 'LOGIN_GOOGLE' ? 'text-purple-400' : log.type === 'EDICION' ? 'text-amber-400' : 'text-emerald-400'}">${esc(log.type)}</td>
+          <td class="p-3 text-slate-300">${esc(log.detail)}</td>
         </tr>
       `).join('');
 
@@ -1449,7 +1454,7 @@
         return;
       }
 
-      const csvContent = Papa.unparse(auditLogs);
+      const csvContent = Papa.unparse(auditLogs, { escapeFormulae: true });
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -1679,6 +1684,7 @@
       });
     }
 
+    // 2.1 CÁLCULO DE MESES ACUMULADOS Y LÍNEAS CELULARES
     function renderCelularesCharts(data) {
       const areaVolumen = {};
       const areaCostos = {};
@@ -1741,25 +1747,20 @@
         }
       });
 
-      const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"];
-      const monthCounts = Array(monthNames.length).fill(0);
-
-      data.forEach(d => {
-        if (d['FechaAlta']) {
-          const m = new Date(d['FechaAlta']).getMonth();
-          if (m < monthCounts.length) monthCounts[m]++;
-        } else {
-          monthCounts[0]++;
-        }
-      });
+      const monthCounts = Array(12).fill(0);
+      data.forEach(d => { const m = monthOf(d['FechaAlta']); if (m >= 0) monthCounts[m]++; });
+      const lastM = Math.max(...monthCounts.map((c, i) => c ? i : 0));
+      const labels = monthNames.slice(0, lastM + 1);
+      let acc = 0;
+      const cumulative = monthCounts.slice(0, lastM + 1).map(c => (acc += c));
 
       chartObj3 = new Chart(document.getElementById('c3'), {
         type: 'line',
         data: {
-          labels: monthNames,
+          labels: labels,
           datasets: [{
-            label: 'Nuevas Líneas',
-            data: monthCounts,
+            label: 'Líneas acumuladas',
+            data: cumulative,
             borderColor: '#3b82f6',
             backgroundColor: 'rgba(59, 130, 246, 0.15)',
             fill: true,
@@ -1812,6 +1813,7 @@
       });
     }
 
+    // 1.1 Y 2.2 RENDER TABLE ESCAPADO Y ESTATUS DE OBSOLESCENCIA
     function renderTable() {
       const tbody = document.getElementById('inventoryTable');
       tbody.innerHTML = '';
@@ -1831,13 +1833,14 @@
           tr.className = "bg-panel-hover transition-colors";
 
           if (currentDataset === 'HQ') {
-            const assetId = row['Numero de Serie'] ? `AST-${row['Numero de Serie'].substring(0,6)}` : `HQ-${row._rowIndex+100}`;
-            const usuario = row['Responsable del activo'] || 'Stock / Sin Asignar';
-            const depto = row['Direccion'] || 'N/D';
-            const tier = row['Tier Actual'] || 'Tier 2';
-            const modelo = `${row['Marca'] || ''} ${row['Model'] || row['Tipo'] || ''}`;
-            const modalidad = row['Modalidad'] || 'Presencial';
-            const estatus = row['Años de Vida Remanente'] <= 0 ? 'Obsoleto' : 'Activo';
+            const assetId = row['Numero de Serie'] ? `AST-${esc(row['Numero de Serie'].substring(0,6))}` : `HQ-${row._rowIndex+100}`;
+            const usuario = esc(row['Responsable del activo']) || 'Stock / Sin Asignar';
+            const depto = esc(row['Direccion']) || 'N/D';
+            const tier = esc(row['Tier Actual']) || 'Tier 2';
+            const modelo = `${esc(row['Marca'])} ${esc(row['Model'] || row['Tipo'])}`;
+            const modalidad = esc(row['Modalidad']) || 'Presencial';
+            const v = parseInt(row['Años de Vida Remanente'], 10);
+            const estatus = (!Number.isNaN(v) && v <= 0) ? 'Obsoleto' : 'Activo';
 
             tr.innerHTML = `
               <td class="p-3 font-mono font-bold text-blue-400">${assetId}</td>
@@ -1855,15 +1858,15 @@
             `;
           } else if (currentDataset === 'TIENDAS') {
             tr.innerHTML = `
-              <td class="p-3 font-mono font-bold text-blue-400">${row['Asset_ID']}</td>
-              <td class="p-3 font-mono font-bold text-indigo-300">${row['ID_Tienda']}</td>
-              <td class="p-3 font-semibold text-purple-300">${row['Tienda']}</td>
-              <td class="p-3 font-bold text-emerald-400">${row['Tipo_Equipo']}</td>
-              <td class="p-3 font-medium text-cyan-400">${row['Marca']}</td>
-              <td class="p-3 font-semibold text-white">${row['Modelo']}</td>
+              <td class="p-3 font-mono font-bold text-blue-400">${esc(row['Asset_ID'])}</td>
+              <td class="p-3 font-mono font-bold text-indigo-300">${esc(row['ID_Tienda'])}</td>
+              <td class="p-3 font-semibold text-purple-300">${esc(row['Tienda'])}</td>
+              <td class="p-3 font-bold text-emerald-400">${esc(row['Tipo_Equipo'])}</td>
+              <td class="p-3 font-medium text-cyan-400">${esc(row['Marca'])}</td>
+              <td class="p-3 font-semibold text-white">${esc(row['Modelo'])}</td>
               <td class="p-3 text-center">
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  ${row['Estatus']}
+                  ${esc(row['Estatus'])}
                 </span>
               </td>
               <td class="p-3 text-center">${actionBtn}</td>
@@ -1876,17 +1879,17 @@
               : 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
 
             tr.innerHTML = `
-              <td class="p-3 font-mono font-bold text-blue-400">${row['Numero']}</td>
-              <td class="p-3 font-semibold text-indigo-300">${row['Area']}</td>
-              <td class="p-3 text-white font-medium">${row['Usuario']}</td>
-              <td class="p-3 font-mono text-slate-400 text-[11px]">${row['Mail']}</td>
-              <td class="p-3 font-semibold text-purple-300">${row['Plan']}</td>
-              <td class="p-3 text-emerald-400 font-bold">${row['PagoMensual']}</td>
-              <td class="p-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700">${row['TipoSim']}</span></td>
-              <td class="p-3 text-center font-mono text-slate-400">${row['Datos']}</td>
+              <td class="p-3 font-mono font-bold text-blue-400">${esc(row['Numero'])}</td>
+              <td class="p-3 font-semibold text-indigo-300">${esc(row['Area'])}</td>
+              <td class="p-3 text-white font-medium">${esc(row['Usuario'])}</td>
+              <td class="p-3 font-mono text-slate-400 text-[11px]">${esc(row['Mail'])}</td>
+              <td class="p-3 font-semibold text-purple-300">${esc(row['Plan'])}</td>
+              <td class="p-3 text-emerald-400 font-bold">${esc(row['PagoMensual'])}</td>
+              <td class="p-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700">${esc(row['TipoSim'])}</span></td>
+              <td class="p-3 text-center font-mono text-slate-400">${esc(row['Datos'])}</td>
               <td class="p-3 text-center">
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeEstatus}">
-                  ${row['Estatus']}
+                  ${esc(row['Estatus'])}
                 </span>
               </td>
               <td class="p-3 text-center">${actionBtn}</td>
@@ -1896,8 +1899,10 @@
         });
       }
 
+      // 2.4 PAGINACIÓN VACÍA CORREGIDA
+      const startDisplay = filteredData.length ? start + 1 : 0;
       const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
-      document.getElementById('paginationInfo').innerText = `Mostrando ${start + 1} - ${Math.min(start + pageSize, filteredData.length)} de ${filteredData.length} activos`;
+      document.getElementById('paginationInfo').innerText = `Mostrando ${startDisplay} - ${Math.min(start + pageSize, filteredData.length)} de ${filteredData.length} activos`;
       document.getElementById('pageIndicator').innerText = `${currentPage} / ${totalPages}`;
       document.getElementById('btnPrev').disabled = currentPage === 1;
       document.getElementById('btnNext').disabled = currentPage === totalPages;
@@ -1965,65 +1970,51 @@
       }
     }
 
-    function editAsset(rowIndex) {
-      if (!isAdmin) return;
-
-      const item = globalData.find(d => d._rowIndex === rowIndex);
-      if (!item) return;
-
-      document.getElementById('editRowIndex').value = rowIndex;
-      document.getElementById('modalTitle').innerText = 'Editar Registro';
-
-      if (currentDataset === 'HQ') {
-        openModal('EQUIPO');
-        setTimeout(() => {
-          if (document.getElementById('formSerie')) document.getElementById('formSerie').value = item['Numero de Serie'] || '';
-          if (document.getElementById('formResponsable')) document.getElementById('formResponsable').value = item['Responsable del activo'] || '';
-          if (document.getElementById('formMail')) document.getElementById('formMail').value = item['Mail'] || '';
-          if (document.getElementById('formDireccion')) document.getElementById('formDireccion').value = item['Direccion'] || '';
-          if (document.getElementById('formMarcaHQ')) document.getElementById('formMarcaHQ').value = item['Marca'] || '';
-          if (document.getElementById('formModeloHQ')) document.getElementById('formModeloHQ').value = item['Model'] || item['Tipo'] || '';
-          if (document.getElementById('formFechaAlta')) document.getElementById('formFechaAlta').value = item['FechaAlta'] || new Date().toISOString().slice(0, 10);
-        }, 50);
-      } else if (currentDataset === 'TIENDAS') {
-        openModal('EQUIPO');
-        setTimeout(() => {
-          if (document.getElementById('formAssetID')) document.getElementById('formAssetID').value = item['Asset_ID'] || '';
-          if (document.getElementById('formIDTienda')) document.getElementById('formIDTienda').value = item['ID_Tienda'] || '';
-          if (document.getElementById('formTienda')) document.getElementById('formTienda').value = item['Tienda'] || '';
-          if (document.getElementById('formTipo')) document.getElementById('formTipo').value = item['Tipo_Equipo'] || '';
-          if (document.getElementById('formMarcaTienda')) document.getElementById('formMarcaTienda').value = item['Marca'] || '';
-          if (document.getElementById('formModeloTienda')) document.getElementById('formModeloTienda').value = item['Modelo'] || '';
-          if (document.getElementById('formFechaAlta')) document.getElementById('formFechaAlta').value = item['FechaAlta'] || new Date().toISOString().slice(0, 10);
-        }, 50);
-      } else if (currentDataset === 'CELULARES') {
-        openModal('CELULAR');
-        setTimeout(() => {
-          if (document.getElementById('formNumCelular')) document.getElementById('formNumCelular').value = item['Numero'] || '';
-          if (document.getElementById('formAreaCel')) document.getElementById('formAreaCel').value = item['Area'] || '';
-          if (document.getElementById('formUsuarioCel')) document.getElementById('formUsuarioCel').value = item['Usuario'] || '';
-          if (document.getElementById('formMailCel')) document.getElementById('formMailCel').value = item['Mail'] || '';
-          if (document.getElementById('formPagoMensual')) document.getElementById('formPagoMensual').value = item['PagoMensual'] || '';
-          if (document.getElementById('formPlanCel')) document.getElementById('formPlanCel').value = item['Plan'] || '';
-          if (document.getElementById('formModeloCel')) document.getElementById('formModeloCel').value = item['Modelo'] || '';
-          if (document.getElementById('formFechaAlta')) document.getElementById('formFechaAlta').value = item['FechaAlta'] || new Date().toISOString().slice(0, 10);
-          if (document.getElementById('formTipoSim')) document.getElementById('formTipoSim').value = item['TipoSim'] || 'SIM';
-        }, 50);
-      }
-    }
-
-    function openModal(defaultType = 'EQUIPO') {
+    // 1.2 FUNCIONES REEMPLAZADAS: openModal, fillForm, editAsset
+    function openModal(defaultType = 'EQUIPO', editIndex = '') {
       if (!isAdmin) return;
       document.getElementById('assetModal').classList.remove('hidden');
       document.getElementById('templateTypeSelector').value = defaultType;
-      document.getElementById('modalTitle').innerText = 'Capturar Nuevo Registro';
-      document.getElementById('editRowIndex').value = '';
+      document.getElementById('editRowIndex').value = editIndex;
+      document.getElementById('modalTitle').innerText =
+        editIndex === '' ? 'Capturar Nuevo Registro' : 'Editar Registro';
       renderModalForm(defaultType);
+    }
+
+    function fillForm(map) {
+      Object.entries(map).forEach(([id, v]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = v ?? '';
+      });
+    }
+
+    function editAsset(rowIndex) {
+      if (!isAdmin) return;
+      const item = globalData.find(d => d._rowIndex === rowIndex);
+      if (!item) return;
+      const today = new Date().toISOString().slice(0, 10);
+      const fecha = item['FechaAlta'] || today;
+      if (currentDataset === 'HQ') {
+        openModal('EQUIPO', rowIndex);
+        fillForm({ formSerie: item['Numero de Serie'], formResponsable: item['Responsable del activo'],
+          formMail: item['Mail'], formDireccion: item['Direccion'], formMarcaHQ: item['Marca'],
+          formModeloHQ: item['Model'] || item['Tipo'], formFechaAlta: fecha });
+      } else if (currentDataset === 'TIENDAS') {
+        openModal('EQUIPO', rowIndex);
+        fillForm({ formAssetID: item['Asset_ID'], formIDTienda: item['ID_Tienda'], formTienda: item['Tienda'],
+          formTipo: item['Tipo_Equipo'], formMarcaTienda: item['Marca'], formModeloTienda: item['Modelo'],
+          formFechaAlta: fecha });
+      } else {
+        openModal('CELULAR', rowIndex);
+        fillForm({ formNumCelular: item['Numero'], formAreaCel: item['Area'], formUsuarioCel: item['Usuario'],
+          formMailCel: item['Mail'], formPagoMensual: item['PagoMensual'], formPlanCel: item['Plan'],
+          formModeloCel: item['Modelo'], formTipoSim: item['TipoSim'] || 'SIM', formFechaAlta: fecha });
+      }
     }
 
     function closeModal() { document.getElementById('assetModal').classList.add('hidden'); }
 
-    // GUARDADO DE REGISTROS CORREGIDO CON PERSISTENCIA LOCAL EN LOCALSTORAGE
+    // 1.3 GUARDADO DE REGISTROS CON _rowIndex: newId(), _added: true, e item._dirty = true
     function saveAsset(e) {
       e.preventDefault();
       if (!isAdmin) return;
@@ -2038,10 +2029,11 @@
       const fechaAltaCapturada = document.getElementById('formFechaAlta')?.value || now.toISOString().slice(0, 10);
 
       if (isEdit) {
-        const idx = parseInt(editIndex);
-        const item = globalData.find(d => d._rowIndex === idx);
+        const idx = editIndex.includes ? editIndex : parseInt(editIndex);
+        const item = globalData.find(d => d._rowIndex == idx);
         
         if (item) {
+          item._dirty = true;
           item['FechaAlta'] = fechaAltaCapturada;
           item['FechaSistema'] = fechaSistemaFormatted;
           item['AdminCaptura'] = adminMail;
@@ -2080,7 +2072,8 @@
           const tiendaKey = tiendaVal.toLowerCase().trim();
 
           const newItem = {
-            _rowIndex: globalData.length,
+            _rowIndex: newId(),
+            _added: true,
             'Asset_ID': document.getElementById('formAssetID')?.value || `AST-${Date.now()}`,
             'ID_Tienda': document.getElementById('formIDTienda')?.value || TIENDA_ID_MAP[tiendaKey] || `TDA-${tiendaVal.substring(0,4).toUpperCase()}`,
             'Tienda': tiendaVal,
@@ -2095,7 +2088,8 @@
           globalData.unshift(newItem);
         } else if (currentDataset === 'HQ') {
           const newItem = {
-            _rowIndex: globalData.length,
+            _rowIndex: newId(),
+            _added: true,
             'Numero de Serie': document.getElementById('formSerie')?.value || `HQ-${Date.now()}`,
             'Responsable del activo': document.getElementById('formResponsable')?.value || 'Sin Asignar',
             'Mail': document.getElementById('formMail')?.value || '-',
@@ -2112,7 +2106,8 @@
           globalData.unshift(newItem);
         } else if (currentDataset === 'CELULARES') {
           const newItem = {
-            _rowIndex: globalData.length,
+            _rowIndex: newId(),
+            _added: true,
             'Numero': document.getElementById('formNumCelular')?.value || `55 0000 ${Math.floor(1000 + Math.random() * 9000)}`,
             'Area': document.getElementById('formAreaCel')?.value || 'General',
             'Usuario': document.getElementById('formUsuarioCel')?.value || 'Sin Asignar',
@@ -2141,13 +2136,15 @@
       alert(isEdit ? '¡Registro actualizado con éxito y guardado localmente!' : `¡Nuevo registro capturado y guardado localmente!`);
     }
 
+    // 2.4 EXPORT DE ARCHIVOS LIMPIOS SIN INYECCIÓN DE FÓRMULAS NI METADATOS INTERNOS
     function exportCSV() {
       if (filteredData.length === 0) {
         alert('No hay datos para exportar');
         return;
       }
       logAction('EXPORT', `Exportación CSV de ${currentDataset}`);
-      const csvContent = Papa.unparse(filteredData);
+      const rows = filteredData.map(({ _rowIndex, _added, _dirty, ...r }) => r);
+      const csvContent = Papa.unparse(rows, { escapeFormulae: true });
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
