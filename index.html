@@ -100,7 +100,7 @@
           <select id="datasetSelector" onchange="switchDataset(this.value)" class="w-full bg-[#171a1f] border border-rocker text-slate-200 px-2 py-1.5 rounded-lg focus:outline-none focus:border-blue-500 text-xs font-semibold">
             <option value="HQ" selected>🏢 Inventario HQ / Corporativo</option>
             <option value="TIENDAS">🏪 Inventario Tiendas / Retail</option>
-            <option value="CELULARES">📱 Telefonía Celular</option>
+            <option value="CELULARES">📱 Telefonía Celular</option><option value="CAT_TIENDAS">🏬 Tiendas · Directorio</option><option value="CAT_USUARIOS">👥 Usuarios · Altas</option><option value="APERTURAS">📅 Aperturas por año</option>
           </select>
         </div>
 
@@ -200,7 +200,7 @@
     </header>
 
     <!-- Main Dashboard Area -->
-    <main class="p-6 space-y-6 max-w-[1600px] w-full mx-auto">
+    <main class="p-6 space-y-6 max-w-[1600px] w-full mx-auto"><section id="catalogSection" class="hidden bg-[#171a1f] border border-rocker rounded-xl p-4"></section>
 
       <!-- TARJETAS KPIS DINÁMICAS -->
       <div id="kpiContainerGrid" class="grid grid-cols-1 sm:grid-cols-4 gap-4"></div>
@@ -271,7 +271,7 @@
             <option value="HQ">💻 Equipos HQ / Computo</option>
             <option value="TIENDAS">🏪 Ubicaciones / Sedes Retail</option>
             <option value="USUARIOS">👤 Directorio de Usuarios</option>
-            <option value="CELULARES">📱 Telefonía Celular</option>
+            <option value="CELULARES">📱 Telefonía Celular</option><option value="CAT_TIENDAS">🏬 Tiendas · Directorio</option><option value="CAT_USUARIOS">👥 Usuarios · Altas</option><option value="APERTURAS">📅 Aperturas por año</option>
           </select>
         </div>
 
@@ -837,6 +837,7 @@
         const costKey = Object.keys(rawObj).find(k => COST_RE.test(k));
 
         return {
+          ...rawObj,
           ...(costKey ? { [costKey]: rawObj[costKey] } : {}),
           _rowIndex: idx,
           'Asset_ID': assetId,
@@ -2463,5 +2464,91 @@
       document.getElementById('loginModal').classList.remove('hidden');
     }
   </script>
+<script>
+// Catálogos independientes; las claves del inventario existente se conservan.
+const catalogKeys = ['CAT_TIENDAS', 'CAT_USUARIOS', 'APERTURAS'];
+let catalogRows = [], catalogYear = null, catalogRequest = 0;
+const originalSwitchDataset = switchDataset, originalApplyFilters = applyFilters,
+ originalSwitchView = switchView, originalRenderModal = renderModalForm, originalSaveAsset = saveAsset;
+function readCatalog(key) { try { const value = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } }
+function catalogValue(row, keys) { for (const k of keys) if (row[k] && row[k] !== '-') return String(row[k]).trim(); return ''; }
+function openingDate(row) {
+ const value = catalogValue(row, ['FechaApertura','Fecha de apertura','Fecha de Apertura','Apertura']);
+ let m = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:$|[ T])/);
+ if (!m) { const d = value.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/); if (d) m = [d[0],d[3],d[2].padStart(2,'0'),d[1].padStart(2,'0')]; }
+ if (!m) return '';
+ const date = new Date(Date.UTC(+m[1], +m[2]-1, +m[3]));
+ return date.getUTCFullYear() === +m[1] && date.getUTCMonth() === +m[2]-1 && date.getUTCDate() === +m[3] ? `${m[1]}-${m[2]}-${m[3]}` : '';
+}
+function catalogVisibility(on) {
+ document.getElementById('catalogSection').classList.toggle('hidden',!on);
+ for (const id of ['filterSection','tableSection','viewContainer']) document.getElementById(id)?.classList.toggle('hidden',on);
+}
+switchDataset = function(key) {
+ catalogRequest++;
+ if (!catalogKeys.includes(key)) { catalogVisibility(false); return originalSwitchDataset(key); }
+ currentDataset = key; catalogYear = null; catalogVisibility(true);
+ document.getElementById('datasetSelector').value = key;
+ const token = catalogRequest;
+ document.getElementById('catalogSection').innerHTML = '<p role="status">Cargando catálogo…</p>';
+ const source = key === 'CAT_USUARIOS' ? 'HQ' : 'TIENDAS';
+ Papa.parse(source === 'HQ' ? SHEET_HQ_URL : SHEET_TIENDAS_URL, {
+ download:true, header:false, skipEmptyLines:true,
+ complete: result => {
+ if (token !== catalogRequest) return;
+ const prior = globalData;
+ try { source === 'HQ' ? parseHQData(result.data) : parseTiendasData(result.data); const edits = (()=>{try{return JSON.parse(localStorage.getItem(`galileo_edits_${source}`)||'{}')}catch{return {}}})();
+ catalogRows = [...readCatalog(`galileo_added_${source}`),...globalData.map(r=>({...r,...edits[r._rowIndex]}))]; }
+ finally { globalData = prior; }
+ renderCatalog();
+ }, error:()=>{if(token===catalogRequest){catalogRows=[];renderCatalog('No se pudo cargar la fuente. Se muestran las altas guardadas en este navegador.');}}
+ });
+};
+function renderCatalog(warning='') {
+ const users = currentDataset === 'CAT_USUARIOS';
+ const local = readCatalog(users ? 'galileo_catalog_users' : 'galileo_catalog_stores');
+ const map = new Map();
+ for (const row of [...catalogRows,...local]) {
+ const name = catalogValue(row, users ? ['Nombre','Responsable del activo','Usuario'] : ['Tienda','Sucursal']);
+ if (!name || /^(sin asignar|sin tienda)$/i.test(name)) continue;
+ const id = users ? catalogValue(row,['Mail','Correo']) || name : catalogValue(row,['ID_Tienda','ID Tienda']) || name;
+ const key = id.toLocaleLowerCase('es'); const old = map.get(key)||{};
+ const merged = {...old}; for(const [k,v] of Object.entries(row)) if(v!=='' && v!=null) merged[k]=v;
+ merged.Nombre = name; map.set(key,merged);
+ }
+ let rows = [...map.values()];
+ const years = [...new Set(rows.map(openingDate).filter(Boolean).map(d=>d.slice(0,4)))].sort((a,b)=>b-a);
+ if(catalogYear===null) catalogYear=years[0]||'';
+ const openings = currentDataset === 'APERTURAS';
+ const missing = rows.filter(r=>!openingDate(r)).length;
+ if(openings) rows=rows.filter(r=>openingDate(r) && (catalogYear==='all'||openingDate(r).startsWith(catalogYear)));
+ const query = (document.getElementById('catalogSearch')?.value||'').toLocaleLowerCase('es');
+ rows=rows.filter(r=>Object.values(r).some(v=>String(v).toLocaleLowerCase('es').includes(query)));
+ rows.sort((a,b)=>openings ? openingDate(b).localeCompare(openingDate(a)) : a.Nombre.localeCompare(b.Nombre,'es'));
+ const fields = users ? [['ID empleado',['IDEmpleado','ID Empleado']],['Nombre',['Nombre']],['Correo',['Mail','Correo']],['BU / Área',['BU','Direccion','Area']],['Puesto',['Puesto']],['Fecha de alta',['FechaAlta','Fecha de Alta']],['Capturó',['AdminCaptura']],['Registro',['FechaSistema']]] : [['ID tienda',['ID_Tienda','ID Tienda']],['Nombre',['Nombre']],['Dirección',['DireccionTienda','Dirección','Direccion','Domicilio']],['Fecha de apertura',['FechaApertura','Fecha de apertura','Fecha de Apertura','Apertura']],['Estatus',['Estatus']],['Capturó',['AdminCaptura']]];
+ const root=document.getElementById('catalogSection');
+ root.innerHTML=`<div class="flex flex-wrap gap-3 items-center justify-between"><h2 class="text-white font-bold text-lg">${users?'Usuarios':openings?'Aperturas':'Tiendas'}</h2>${isAdmin?`<button onclick="openModal('${users?'USUARIO':'TIENDA'}')" class="bg-blue-600 text-white rounded-lg px-3 py-2">Nueva ${users?'alta':'tienda'}</button>`:''}</div><div class="flex flex-wrap gap-3 my-4"><input id="catalogSearch" aria-label="Buscar en catálogo" placeholder="Buscar…" class="bg-[#0f1115] border border-rocker rounded-lg px-3 py-2" value="${esc(query)}">${openings?`<label>Año <select onchange="catalogYear=this.value;renderCatalog()" class="bg-[#0f1115] border border-rocker rounded-lg px-3 py-2"><option value="all" ${catalogYear==='all'?'selected':''}>Todos</option>${years.map(y=>`<option ${catalogYear===y?'selected':''}>${y}</option>`).join('')}</select></label>`:''}<span class="text-slate-400">${rows.length} registros</span></div>${warning?`<p role="alert" class="text-amber-400">${esc(warning)}</p>`:''}${openings&&missing?`<p class="text-slate-400 mb-3">${missing} tiendas sin fecha de apertura registrada.</p>`:''}<div class="overflow-x-auto"><table class="w-full text-xs text-left"><thead><tr>${fields.map(f=>`<th class="p-3 text-blue-400">${f[0]}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr class="border-t border-rocker">${fields.map(f=>`<td class="p-3">${esc(catalogValue(r,f[1])||'Sin registrar')}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${fields.length}" class="p-6 text-slate-400">No hay registros para esta selección.</td></tr>`}</tbody></table></div>`;
+ const input=document.getElementById('catalogSearch'); input.oninput=()=>{const at=input.selectionStart;renderCatalog();const next=document.getElementById('catalogSearch');next.focus();next.setSelectionRange(at,at);};
+}
+applyFilters=function(){if(catalogKeys.includes(currentDataset))return renderCatalog();return originalApplyFilters();};
+switchView=function(v){if(catalogKeys.includes(currentDataset)){catalogVisibility(true);return renderCatalog();}catalogVisibility(false);return originalSwitchView(v);};
+renderModalForm=function(type){originalRenderModal(type);if(type==='TIENDA'){
+ const box=document.getElementById('modalFormContainer');
+ for(const id of ['formTipo','formMarcaTienda','formModeloTienda']) {const input=document.getElementById(id);if(input){input.required=false;input.parentElement.classList.add('hidden');}}
+ box.insertAdjacentHTML('beforeend','<div><label for="formDireccionTienda">Dirección completa</label><input id="formDireccionTienda" required class="w-full bg-[#0f1115] border border-rocker rounded-lg px-3 py-2"></div><div><label for="formFechaApertura">Fecha de apertura</label><input id="formFechaApertura" type="date" required class="w-full bg-[#0f1115] border border-rocker rounded-lg px-3 py-2"></div>');
+}};
+saveAsset=function(e){const type=document.getElementById('templateTypeSelector').value;
+ if(type!=='TIENDA'&&type!=='USUARIO')return originalSaveAsset(e);
+ e.preventDefault();if(!isAdmin)return;
+ const get=id=>document.getElementById(id)?.value.trim()||'';
+ const row=type==='TIENDA'?{ID_Tienda:get('formIDTienda'),Tienda:get('formTienda'),DireccionTienda:get('formDireccionTienda'),FechaApertura:get('formFechaApertura'),Estatus:'Activo'}:{IDEmpleado:get('formIDEmpleado'),Nombre:get('formNombreUser'),Mail:get('formMailUser'),BU:get('formBUUser'),Puesto:get('formPuestoUser')};
+ Object.assign(row,{FechaAlta:get('formFechaAlta'),FechaSistema:new Date().toISOString(),AdminCaptura:currentUser?.mail||''});
+ const key=type==='TIENDA'?'galileo_catalog_stores':'galileo_catalog_users';const saved=readCatalog(key);
+ const exists=saved.some(r=>type==='TIENDA'?r.ID_Tienda===row.ID_Tienda:r.Mail?.toLowerCase()===row.Mail.toLowerCase()||r.IDEmpleado===row.IDEmpleado);
+ if(exists){alert('Ya existe un registro con ese identificador o correo.');return;}
+ try{localStorage.setItem(key,JSON.stringify([...saved,row]));}catch{alert('No se pudo guardar el registro. Revisa el espacio disponible del navegador.');return;}
+ logAction('ALTA',`Alta de ${type}: ${row.Tienda||row.Nombre}`);closeModal();switchDataset(type==='TIENDA'?'CAT_TIENDAS':'CAT_USUARIOS');
+};
+</script>
 </body>
 </html>
