@@ -2121,8 +2121,8 @@
         dims: { Tienda: D('Tienda', F('Tienda'), 'filterTienda'), Tipo_Equipo: D('Tipo de equipo', F('Tipo_Equipo'), 'filterProducto'),
                 Marca: D('Marca', F('Marca')), Estatus: D('Estatus', F('Estatus'), 'filterEstatus'), Modelo: D('Modelo', F('Modelo')) },
         pivot: ['Tienda', 'Tipo_Equipo'],
-        res: [['🏪 Dispositivos por Tienda', 'bar', 'Tienda'], ['📦 Mix de Equipos', 'doughnut', 'Tipo_Equipo'], ['🟢 Estatus del Parque', 'doughnut', 'Estatus'], ['🏷️ Top Marcas', 'hbar', 'Marca']],
-        cross: [['Tienda × Tipo de equipo', 'st', 'Tienda', 'Tipo_Equipo'], ['Tienda × Estatus', 'st', 'Tienda', 'Estatus'], ['Tipo de equipo × Marca', 'st', 'Tipo_Equipo', 'Marca'], ['Marca × Estatus', 'st', 'Marca', 'Estatus']]
+        res: [['🏪 Dispositivos por Tienda', 'treemap', 'Tienda'], ['📦 Mix de Equipos', 'polar', 'Tipo_Equipo'], ['🟢 Estatus del Parque', 'semi', 'Estatus'], ['🏷️ Marcas (Pareto)', 'pareto', 'Marca']],
+        cross: [['Tienda × Tipo de equipo', 'bubble', 'Tienda', 'Tipo_Equipo'], ['Tienda × Estatus (% del parque)', 'sth', 'Tienda', 'Estatus'], ['Perfil de Marcas por Tipo de equipo', 'radar', 'Marca', 'Tipo_Equipo'], ['Marca × Estatus', 'st', 'Marca', 'Estatus']]
       },
       HQ: {
         dims: {
@@ -2135,8 +2135,8 @@
           Estatus: D('Estatus', d => { const v = parseInt(d['Años de Vida Remanente'], 10); return (!isNaN(v) && v <= 0) ? 'Obsoleto' : 'Activo'; })
         },
         pivot: ['Direccion', 'Tier'],
-        res: [['⏳ Años de Vida Remanente', 'bar', 'Vida'], ['🩺 Diagnóstico de Tiering', 'doughnut', 'Diagnostico'], ['🏢 Equipos por Área / Dirección', 'bar', 'Direccion'], ['💻 Windows vs Apple', 'doughnut', 'SO']],
-        cross: [['Área × Tier', 'st', 'Direccion', 'Tier'], ['Área × Diagnóstico', 'st', 'Direccion', 'Diagnostico'], ['Marca × Tier', 'st', 'Marca', 'Tier'], ['Modalidad × Estatus', 'st', 'Modalidad', 'Estatus']]
+        res: [['⏳ Años de Vida Remanente', 'bar', 'Vida'], ['🩺 Diagnóstico de Tiering', 'semi', 'Diagnostico'], ['🏢 Equipos por Área / Dirección', 'treemap', 'Direccion'], ['💻 Windows vs Apple', 'polar', 'SO']],
+        cross: [['Área × Tier', 'bubble', 'Direccion', 'Tier'], ['Área × Diagnóstico (%)', 'sth', 'Direccion', 'Diagnostico'], ['Perfil de Marcas por Tier', 'radar', 'Marca', 'Tier'], ['Modalidad × Estatus', 'st', 'Modalidad', 'Estatus']]
       },
       CELULARES: {
         dims: {
@@ -2146,8 +2146,8 @@
         },
         measure: money,
         pivot: ['Area', 'Plan'],
-        res: [['🏢 Líneas por Área / BU', 'bar', 'Area'], ['💵 Gasto Mensual por Área (MXN)', 'bar', 'Area', 1], ['📈 Crecimiento Mensual de Líneas', 'cum', 'Mes'], ['📱 Distribución por Modelo', 'doughnut', 'Modelo']],
-        cross: [['Área × Plan', 'st', 'Area', 'Plan'], ['Área × Estatus', 'st', 'Area', 'Estatus'], ['Plan × Tipo SIM', 'st', 'Plan', 'TipoSim'], ['Modelo × Estatus', 'st', 'Modelo', 'Estatus']]
+        res: [['🏢 Líneas por Área / BU', 'treemap', 'Area'], ['💵 Gasto Mensual por Área (Pareto)', 'pareto', 'Area', 1], ['📈 Crecimiento Mensual de Líneas', 'cum', 'Mes'], ['📱 Distribución por Modelo', 'polar', 'Modelo']],
+        cross: [['Área × Plan', 'bubble', 'Area', 'Plan'], ['Área × Estatus (%)', 'sth', 'Area', 'Estatus'], ['Perfil de Planes por Tipo SIM', 'radar', 'Plan', 'TipoSim'], ['Modelo × Estatus', 'st', 'Modelo', 'Estatus']]
       }
     };
     let cubeSel = {};
@@ -2190,34 +2190,96 @@
       return globalData.filter(d => Object.keys(dims()).every(x => x === k || !getSel(x) || dimVal(d, x) === getSel(x)));
     }
 
+    const $ = id => document.getElementById(id);
+    const LEG = { position: 'bottom', labels: { boxWidth: 10 } };
     function simpleChart(id, type, k, m) {
-      const e = tally(baseFor(k), k, m).slice(0, 12), sel = getSel(k), pie = type === 'doughnut', cum = type === 'cum';
-      const col = (i, x) => !sel || x[0] === sel ? PAL[i % PAL.length] : PAL[i % PAL.length] + '44';
-      let acc = 0; const data = e.map(x => cum ? (acc += x[1]) : x[1]);
-      const ds = cum
-        ? { borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,.15)', fill: true, tension: .35, pointRadius: 5, pointBackgroundColor: e.map(x => !sel || x[0] === sel ? '#60a5fa' : '#60a5fa44') }
-        : { backgroundColor: e.map((x, i) => col(i, x)), borderRadius: pie ? 0 : 6, borderWidth: 0 };
-      cubeCharts.push(new Chart(document.getElementById(id), {
-        type: cum ? 'line' : type === 'hbar' ? 'bar' : type,
-        data: { labels: e.map(x => x[0]), datasets: [{ label: m ? 'Gasto MXN' : 'Registros', data, ...ds }] },
-        options: { responsive: true, maintainAspectRatio: false, indexAxis: type === 'hbar' ? 'y' : 'x',
-          plugins: { legend: { display: pie, position: 'bottom' } },
-          onClick: (ev, els, ch) => { if (els.length) setDims([[k, ch.data.labels[els[0].index]]]); } }
+      const e = tally(baseFor(k), k, m).slice(0, type === 'pareto' ? 10 : 12), sel = getSel(k);
+      const lab = e.map(x => x[0]), vals = e.map(x => x[1]), name = m ? 'Gasto MXN' : 'Registros';
+      const col = lab.map((x, j) => PAL[j % PAL.length] + (!sel || x === sel ? '' : '44'));
+      let c;
+      if (type === 'cum') {
+        let a = 0;
+        c = { type: 'line', data: { labels: lab, datasets: [{ label: name, data: vals.map(v => a += v), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,.15)', fill: true, tension: .35, pointRadius: 5, pointBackgroundColor: lab.map(x => !sel || x === sel ? '#60a5fa' : '#60a5fa44') }] }, options: { plugins: { legend: { display: false } } } };
+      } else if (type === 'pareto') {
+        const t = vals.reduce((s, v) => s + v, 0) || 1; let a = 0;
+        c = { data: { labels: lab, datasets: [{ type: 'bar', label: name, data: vals, backgroundColor: col, borderRadius: 6, yAxisID: 'y' },
+          { type: 'line', label: '% acumulado', data: vals.map(v => Math.round((a += v) / t * 100)), borderColor: '#f59e0b', pointRadius: 3, yAxisID: 'y1' }] },
+          options: { plugins: { legend: LEG }, scales: { y1: { position: 'right', min: 0, max: 100, grid: { display: false }, ticks: { callback: v => v + '%' } } } } };
+      } else if (type === 'polar' || type === 'semi') {
+        c = { type: type === 'polar' ? 'polarArea' : 'doughnut', data: { labels: lab, datasets: [{ data: vals, backgroundColor: col, borderWidth: 0 }] },
+          options: { plugins: { legend: LEG }, ...(type === 'semi' ? { circumference: 180, rotation: -90, cutout: '60%' } : {}) } };
+      } else {
+        c = { type: 'bar', data: { labels: lab, datasets: [{ label: name, data: vals, backgroundColor: col, borderRadius: 6 }] }, options: { indexAxis: type === 'hbar' ? 'y' : 'x', plugins: { legend: { display: false } } } };
+      }
+      c.type = c.type || 'bar';
+      c.options = { responsive: true, maintainAspectRatio: false, onClick: (ev, els, ch) => { if (els.length) setDims([[k, ch.data.labels[els[0].index]]]); }, ...c.options };
+      cubeCharts.push(new Chart($(id), c));
+    }
+
+    // Treemap en HTML: cada mosaico es proporcional a su participación y es clicable
+    let htmlAx = {};
+    function hitHtml(id, i) { const a = htmlAx[id]; setDims([[a.k, a.l[i]]]); }
+    function treemap(id, k) {
+      const e = tally(baseFor(k), k).slice(0, 10), sel = getSel(k), tot = e.reduce((s, x) => s + x[1], 0) || 1;
+      htmlAx[id] = { k, l: e.map(x => x[0]) };
+      $(id).innerHTML = `<div class="flex flex-wrap gap-1 h-full content-stretch">` + e.map((x, i) => { const s = x[1] / tot;
+        return `<div onclick="hitHtml('${id}',${i})" class="cursor-pointer rounded-lg p-2 text-white overflow-hidden hover:brightness-125 transition" style="flex:${Math.round(s * 100) + 1} 1 ${Math.round(50 + s * 260)}px;background:${PAL[i % PAL.length]}${!sel || x[0] === sel ? 'cc' : '33'}"><div class="text-[11px] font-semibold truncate">${esc(x[0])}</div><div class="text-lg font-bold">${x[1]}</div><div class="text-[10px] opacity-80">${Math.round(s * 100)}%</div></div>`; }).join('') + `</div>`;
+    }
+
+    // ---- Gráficas de cruce (dos dimensiones) ----
+    function crossData(xk, sk, nx = 10, ns = 8) {
+      const rows = filteredData, cnt = {};
+      const xs = tally(rows, xk).slice(0, nx).map(x => x[0]), ss = tally(rows, sk).slice(0, ns).map(x => x[0]);
+      rows.forEach(d => { const q = dimVal(d, xk) + '|' + dimVal(d, sk); cnt[q] = (cnt[q] || 0) + 1; });
+      return { xs, ss, cnt };
+    }
+    const clickPair = (xk, sk) => (ev, els, ch) => { if (els.length) { const e = els[0]; setDims([[xk, ch.data.labels[e.index]], [sk, ch.data.datasets[e.datasetIndex].label]]); } };
+
+    function stackedChart(id, xk, sk, pct, horiz) {
+      const { xs, ss, cnt } = crossData(xk, sk);
+      const tot = xs.map(x => ss.reduce((s, y) => s + (cnt[x + '|' + y] || 0), 0) || 1);
+      cubeCharts.push(new Chart($(id), {
+        type: 'bar',
+        data: { labels: xs, datasets: ss.map((s, i) => ({ label: s, backgroundColor: PAL[i % PAL.length],
+          data: xs.map((x, j) => { const v = cnt[x + '|' + s] || 0; return pct ? Math.round(v / tot[j] * 100) : v; }) })) },
+        options: { responsive: true, maintainAspectRatio: false, indexAxis: horiz ? 'y' : 'x', plugins: { legend: LEG },
+          scales: { x: { stacked: true, ...(pct && horiz ? { max: 100, ticks: { callback: v => v + '%' } } : {}) }, y: { stacked: true } }, onClick: clickPair(xk, sk) }
       }));
     }
 
-    function stackedChart(id, xk, sk) {
-      const rows = filteredData;
-      const xs = tally(rows, xk).slice(0, 10).map(x => x[0]), ss = tally(rows, sk).slice(0, 8).map(x => x[0]);
-      const cnt = {}; rows.forEach(d => { const key = dimVal(d, xk) + '|' + dimVal(d, sk); cnt[key] = (cnt[key] || 0) + 1; });
-      cubeCharts.push(new Chart(document.getElementById(id), {
-        type: 'bar',
-        data: { labels: xs, datasets: ss.map((s, i) => ({ label: s, data: xs.map(x => cnt[x + '|' + s] || 0), backgroundColor: PAL[i % PAL.length] })) },
-        options: { responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } } },
-          scales: { x: { stacked: true }, y: { stacked: true } },
-          onClick: (ev, els, ch) => { if (els.length) setDims([[xk, ch.data.labels[els[0].index]], [sk, ch.data.datasets[els[0].datasetIndex].label]]); } }
+    function radarChart(id, xk, sk) {
+      const { xs, ss, cnt } = crossData(xk, sk, 8, 6);
+      if (xs.length < 3) return stackedChart(id, xk, sk);
+      cubeCharts.push(new Chart($(id), {
+        type: 'radar',
+        data: { labels: xs, datasets: ss.map((s, i) => ({ label: s, data: xs.map(x => cnt[x + '|' + s] || 0), borderColor: PAL[i % PAL.length], backgroundColor: PAL[i % PAL.length] + '33', pointRadius: 3 })) },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: LEG },
+          scales: { r: { ticks: { backdropColor: 'transparent' }, grid: { color: '#242830' }, angleLines: { color: '#242830' } } }, onClick: clickPair(xk, sk) }
       }));
+    }
+
+    function bubbleChart(id, xk, sk) {
+      const { xs, ss, cnt } = crossData(xk, sk), pts = []; let max = 1;
+      xs.forEach(x => ss.forEach(s => { const v = cnt[x + '|' + s] || 0; if (v) { pts.push({ x: s, y: x, v }); max = Math.max(max, v); } }));
+      pts.forEach(p => p.r = 5 + 20 * Math.sqrt(p.v / max));
+      cubeCharts.push(new Chart($(id), {
+        type: 'bubble',
+        data: { datasets: [{ label: 'Registros', data: pts, backgroundColor: '#3b82f6aa', borderColor: '#60a5fa' }] },
+        options: { responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.raw.y} × ${c.raw.x}: ${c.raw.v}` } } },
+          scales: { x: { type: 'category', labels: ss, offset: true }, y: { type: 'category', labels: xs, reverse: true, offset: true } },
+          onClick: (ev, els, ch) => { if (els.length) { const r = ch.data.datasets[0].data[els[0].index]; setDims([[xk, r.y], [sk, r.x]]); } } }
+      }));
+    }
+
+    function drawChart(d, i) {
+      const id = 'k' + i, t = d[1];
+      if (t === 'st') stackedChart(id, d[2], d[3]);
+      else if (t === 'sth') stackedChart(id, d[2], d[3], 1, 1);
+      else if (t === 'radar') radarChart(id, d[2], d[3]);
+      else if (t === 'bubble') bubbleChart(id, d[2], d[3]);
+      else if (t === 'treemap') treemap(id, d[2]);
+      else simpleChart(id, t, d[2], d[3]);
     }
 
     function pivotClick(i, j) { setDims([[pivot.row, pivAx.r[i]], [pivot.col, pivAx.c[j]]]); }
@@ -2262,10 +2324,10 @@
       const chips = act.map(k => `<button onclick="clearDim('${k}')" class="px-2 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30 text-[10px]">${c.dims[k].l}: ${esc(getSel(k))} ✕</button>`).join('') +
         (act.length ? `<button onclick="clearCube()" class="text-[10px] text-rose-400 hover:text-rose-300 px-2">Limpiar todo</button>` : `<span class="text-[10px] text-slate-600">Haz clic en cualquier gráfico para segmentar todo el dashboard y la tabla</span>`);
       const defs = av === 'global' ? c.res : c.cross;
-      const card = (t, i) => `<div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl"><h2 class="text-sm font-bold text-white mb-4">${t}</h2><div class="h-64"><canvas id="k${i}"></canvas></div></div>`;
-      const body = av === 'modelo' ? renderPivot(filteredData) : `<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">${defs.map((d, i) => card(d[0], i)).join('')}</div>`;
+      const card = (t, i, tp) => `<div class="bg-panel p-5 rounded-xl border border-rocker shadow-xl"><h2 class="text-sm font-bold text-white mb-4">${t}</h2>${tp === 'treemap' ? `<div id="k${i}" class="h-64 overflow-hidden"></div>` : `<div class="h-64"><canvas id="k${i}"></canvas></div>`}</div>`;
+      const body = av === 'modelo' ? renderPivot(filteredData) : `<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">${defs.map((d, i) => card(d[0], i, d[1])).join('')}</div>`;
       document.getElementById('viewContainer').innerHTML = `<div class="flex flex-wrap items-center gap-2">${tabs}</div><div class="flex flex-wrap items-center gap-2">${chips}</div>${body}`;
-      if (av !== 'modelo') defs.forEach((d, i) => d[1] === 'st' ? stackedChart('k' + i, d[2], d[3]) : simpleChart('k' + i, d[1], d[2], d[3]));
+      if (av !== 'modelo') defs.forEach(drawChart);
     }
 
     // ================= LOGOUT =================
