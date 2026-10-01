@@ -30,12 +30,9 @@
 </head>
 <body class="font-sans antialiased flex h-screen overflow-hidden text-xs">
 
-  <!-- MODAL DE LOGIN OBLIGATORIO CON GOOGLE (FONDO SPOTLIGHT HD EN HD) -->
-  <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat relative" style="background-image: url('https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=2070&auto=format&fit=crop');">
-    <!-- Capa de sombra/humo sutil para dar dramatismo HD -->
-    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/80 backdrop-blur-[2px]"></div>
-
-    <div class="bg-[#171a1f]/90 border border-rocker/80 rounded-2xl shadow-[0_10px_50px_rgba(0,0,0,0.8)] w-full max-w-md p-6 space-y-5 relative z-10 backdrop-blur-md">
+  <!-- MODAL DE LOGIN OBLIGATORIO CON GOOGLE -->
+  <div id="loginModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-panel border border-rocker rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
       <div class="text-center space-y-1">
         <div class="w-14 h-14 bg-[#0f1115] border border-blue-500/40 rounded-2xl mx-auto flex items-center justify-center font-black text-2xl mb-3 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
           <span class="text-blue-500">I</span><span class="text-white">G</span>
@@ -525,7 +522,7 @@
       const savedLogs = localStorage.getItem('galileo_audit_logs');
       if (savedLogs) auditLogs = JSON.parse(savedLogs);
 
-      // RESTAURAR SESIÓN GUARDADA
+      // NUEVO: Restaurar sesión si existe en sessionStorage para evitar logout al dar F5
       const savedSession = sessionStorage.getItem('galileo_user_session');
       if (savedSession) {
         try {
@@ -563,7 +560,7 @@
 
       currentUser = { mail, bu, picture, name: payload.name };
       
-      // PERSISTIR SESIÓN
+      // NUEVO: Guardar en sessionStorage para mantener la sesión activa al recargar la página
       sessionStorage.setItem('galileo_user_session', JSON.stringify(currentUser));
 
       applyUserSessionUI();
@@ -571,6 +568,7 @@
       logAction('LOGIN_GOOGLE', `Inicio de sesión exitoso con Google como ${isAdmin ? 'Administrador' : 'Lector'} (BU: ${bu})`);
     }
 
+    // NUEVO: Función modular para aplicar la interfaz según los datos del usuario autenticado
     function applyUserSessionUI() {
       if (!currentUser) return;
 
@@ -885,7 +883,7 @@
         container.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3";
         container.innerHTML = `
           <input type="text" id="filterNombre" placeholder="👤 Buscar por Nombre..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
-          <input type="text" id="filterMail" placeholder="✉ Buscar por Correo..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
+          <input type="text" id="filterMail" placeholder="✉️️ Buscar por Correo..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
           <select id="filterArea" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">Todas las Áreas / Direcciones</option></select>
           <select id="filterMarca" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">Todas las Marcas</option></select>
           <select id="filterDiagnostico" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs">
@@ -2465,7 +2463,7 @@
     function logout() {
       if (!confirm('¿Cerrar sesión?')) return;
 
-      // ELIMINAR SESIÓN GUARDADA
+      // NUEVO: Eliminar la sesión guardada para obligar al usuario a autenticarse de nuevo
       sessionStorage.removeItem('galileo_user_session');
 
       logAction('LOGOUT', 'Cierre de sesión');
