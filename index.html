@@ -521,6 +521,17 @@
     window.addEventListener('DOMContentLoaded', () => {
       const savedLogs = localStorage.getItem('galileo_audit_logs');
       if (savedLogs) auditLogs = JSON.parse(savedLogs);
+
+      // NUEVO: Restaurar sesión si existe en sessionStorage para evitar logout al dar F5
+      const savedSession = sessionStorage.getItem('galileo_user_session');
+      if (savedSession) {
+        try {
+          currentUser = JSON.parse(savedSession);
+          applyUserSessionUI();
+        } catch (e) {
+          sessionStorage.removeItem('galileo_user_session');
+        }
+      }
     });
 
     function parseJwt(token) {
@@ -548,6 +559,23 @@
       if (!mail) return;
 
       currentUser = { mail, bu, picture, name: payload.name };
+      
+      // NUEVO: Guardar en sessionStorage para mantener la sesión activa al recargar la página
+      sessionStorage.setItem('galileo_user_session', JSON.stringify(currentUser));
+
+      applyUserSessionUI();
+
+      logAction('LOGIN_GOOGLE', `Inicio de sesión exitoso con Google como ${isAdmin ? 'Administrador' : 'Lector'} (BU: ${bu})`);
+    }
+
+    // NUEVO: Función modular para aplicar la interfaz según los datos del usuario autenticado
+    function applyUserSessionUI() {
+      if (!currentUser) return;
+
+      const mail = currentUser.mail;
+      const bu = currentUser.bu;
+      const picture = currentUser.picture;
+
       isAdmin = ADMIN_EMAILS.includes(mail) && bu === ADMIN_BU;
 
       document.getElementById('loginModal').classList.add('hidden');
@@ -596,8 +624,6 @@
           switchDataset('HQ');
         }
       }
-
-      logAction('LOGIN_GOOGLE', `Inicio de sesión exitoso con Google como ${isAdmin ? 'Administrador' : 'Lector'} (BU: ${bu})`);
     }
 
     function logAction(tipo, detalle) {
@@ -857,7 +883,7 @@
         container.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3";
         container.innerHTML = `
           <input type="text" id="filterNombre" placeholder="👤 Buscar por Nombre..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
-          <input type="text" id="filterMail" placeholder="✉️ Buscar por Correo..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
+          <input type="text" id="filterMail" placeholder="✉️️ Buscar por Correo..." class="bg-[#0f1115] border border-rocker text-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-xs placeholder-slate-600" />
           <select id="filterArea" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">Todas las Áreas / Direcciones</option></select>
           <select id="filterMarca" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs"><option value="">Todas las Marcas</option></select>
           <select id="filterDiagnostico" class="bg-[#0f1115] border border-rocker text-slate-300 px-3 py-2 rounded-lg focus:outline-none text-xs">
@@ -2436,6 +2462,10 @@
     // ================= LOGOUT =================
     function logout() {
       if (!confirm('¿Cerrar sesión?')) return;
+
+      // NUEVO: Eliminar la sesión guardada para obligar al usuario a autenticarse de nuevo
+      sessionStorage.removeItem('galileo_user_session');
+
       logAction('LOGOUT', 'Cierre de sesión');
       try { google.accounts.id.disableAutoSelect(); } catch (e) {}
       [chartObj1, chartObj2, chartObj3, chartObj4, ...cubeCharts].forEach(c => c && c.destroy());
